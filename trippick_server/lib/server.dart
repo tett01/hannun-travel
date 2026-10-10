@@ -39,6 +39,10 @@ void run(List<String> args) async {
         // If building the Flutter app with WASM, set the below parameter to
         // true and add the --wasm flag to the flutter build command.
         enableWasmHeaders: false,
+        // Flutter build files keep the same names (main.dart.js) on every
+        // build, so a shared CDN cache would keep serving an old app after a
+        // deploy. Browsers still revalidate cheaply with ETags.
+        cacheControlFactory: StaticRoute.privateNoCache(),
       ),
       '/',
     );
