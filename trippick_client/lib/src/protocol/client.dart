@@ -18,45 +18,6 @@ import 'package:trippick_client/src/protocol/places/user_review.dart'
     as _iqsxj9y5;
 import 'protocol.dart' as _il2as5qe;
 
-/// Accessed from the app as `client.place`.
-/// {@category Endpoint}
-class EndpointPlace extends _isc.EndpointRef {
-  EndpointPlace(_isc.EndpointCaller caller) : super(caller);
-
-  @override
-  String get name => 'place';
-
-  /// Places within the search radius of ([lat], [lng]), nearest first.
-  /// The first request for a new area collects its places first.
-  /// Korea uses TourAPI/Kakao; elsewhere OpenStreetMap + Wikipedia.
-  _ida.Future<List<_itawvtbq.Place>> nearby(
-    double lat,
-    double lng,
-  ) => caller.callServerEndpoint<List<_itawvtbq.Place>>(
-    'place',
-    'nearby',
-    {
-      'lat': lat,
-      'lng': lng,
-    },
-  );
-
-  /// Neighborhood name such as "해운대구 우동" ('' if unknown).
-  _ida.Future<String> regionName(
-    double lat,
-    double lng,
-    String language,
-  ) => caller.callServerEndpoint<String>(
-    'place',
-    'regionName',
-    {
-      'lat': lat,
-      'lng': lng,
-      'language': language,
-    },
-  );
-}
-
 /// Accessed from the app as `client.review`.
 /// {@category Endpoint}
 class EndpointReview extends _isc.EndpointRef {
@@ -118,19 +79,13 @@ class Client extends _isc.ServerpodClientShared {
              disconnectStreamsOnLostInternetConnection,
          httpClientOverride: httpClientOverride,
        ) {
-    place = EndpointPlace(this);
     review = EndpointReview(this);
   }
-
-  late final EndpointPlace place;
 
   late final EndpointReview review;
 
   @override
-  Map<String, _isc.EndpointRef> get endpointRefLookup => {
-    'place': place,
-    'review': review,
-  };
+  Map<String, _isc.EndpointRef> get endpointRefLookup => {'review': review};
 
   @override
   Map<String, _isc.ModuleEndpointCaller> get moduleLookup => {};

@@ -32,7 +32,7 @@ class PlaceEndpoint extends Endpoint {
       if (p.distance! > DemoCity.radius) continue;
       // Korean summaries from the old prompt had factual errors: hide them
       // until redone, so the app shows the official info instead.
-      if (p.summaryVersion != SummaryService.version &&
+      if (p.summaryVersion < SummaryService.versionFor(p) &&
           !p.sourceId.startsWith('osm:')) {
         p
           ..highlightKo = null

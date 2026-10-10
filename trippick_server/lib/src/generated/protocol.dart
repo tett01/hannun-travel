@@ -13,7 +13,6 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/protocol.dart' as _isp;
 import 'package:serverpod/serverpod.dart' as _is;
-import 'package:trippick_server/src/generated/places/place.dart' as _i8c2er40;
 import 'package:trippick_server/src/generated/places/user_review.dart'
     as _ipn410b6;
 import 'places/collected_area.dart' as _iefsfaz0;
@@ -396,10 +395,6 @@ class Protocol extends _is.DatabaseSerializationManager {
                       MapEntry(deserialize<String>(k), deserialize<String>(v)),
                 )
               : null)
-          as T;
-    }
-    if (t == List<_i8c2er40.Place>) {
-      return (data as List).map((e) => deserialize<_i8c2er40.Place>(e)).toList()
           as T;
     }
     if (t == List<_ipn410b6.UserReview>) {

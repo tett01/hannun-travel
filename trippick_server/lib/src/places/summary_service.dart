@@ -39,6 +39,32 @@ class SummaryService {
   /// Bump when the prompts change so existing summaries are redone.
   static const version = 2;
 
+  /// Sites named after an independence activist's deed ("이재명 의거지")
+  /// got a stricter rule later, so only those are redone at version 3.
+  static int versionFor(Place place) =>
+      activistOf(place.name) != null ? 3 : version;
+
+  /// "이재명 의거지" -> "이재명": the activist a deed site is named after.
+  static String? activistOf(String placeName) => RegExp(
+    r'^([가-힣]{2,4}) ?(?:의사 ?)?의거(?:지|터)$',
+  ).firstMatch(placeName.trim())?.group(1);
+
+  /// Always "이재명 의사" in Korean, so the activist is not mistaken for a
+  /// present-day namesake (the model does not follow this reliably).
+  static ReviewSummary withHonorific(ReviewSummary s, String person) {
+    // The particle after the name changes with it: 이재명이 -> 이재명 의사가.
+    const particles = {'이': '가', '은': '는', '을': '를', '과': '와', '으로': '로'};
+    final re = RegExp(
+      '(?:청년)?(?:지사 |열사 )?$person(?: ?(?:청년지사|지사|열사|선생|의사))?'
+      '(으로|이|은|을|과|가|는|를|와|로|의|도|에게|에)?(?![가-힣])',
+    );
+    String fix(String text) => text.replaceAllMapped(
+      re,
+      (m) => '$person 의사${particles[m[1]] ?? m[1] ?? ''}',
+    );
+    return ReviewSummary(good: fix(s.good), bad: fix(s.bad), tip: fix(s.tip));
+  }
+
   static const tastes = {'healing', 'activity', 'food', 'photo'};
 
   static const _accuracy = '''
@@ -99,7 +125,7 @@ JSON으로만 답한다: {"name_en": "..."}''';
     return name.isEmpty ? null : name;
   }
 
-  Future<SummaryResult?> summarizeOfficial(Place place) {
+  Future<SummaryResult?> summarizeOfficial(Place place) async {
     final facts = (place.facts ?? const {}).entries
         .where((e) => e.key != 'contentTypeId' && !e.key.startsWith('_'))
         .map((e) => '- ${e.key}: ${e.value}')
@@ -109,10 +135,24 @@ JSON으로만 답한다: {"name_en": "..."}''';
         ? overview.substring(0, 1000)
         : overview;
     final area = place.facts?['_area'] == 'true' ? ' (넓은 지역)' : '';
-    return _call(
+    final person = activistOf(place.name);
+    final note = person == null
+        ? ''
+        : '\n주의: $person은(는) 독립운동가다. 한국어는 "$person 의사", 영어는 '
+              '"independence activist $person"(로마자 표기)로 쓴다. '
+              '원문에 성공했다고 적혀 있지 않으면 "처단했다"가 아니라 "처단하려 했다"로 쓴다.';
+    final result = await _call(
       _officialPrompt,
-      '장소: ${place.name}$area (${place.address})\n'
+      '장소: ${place.name}$area (${place.address})$note\n'
       '소개:\n$text\n이용 정보:\n$facts',
+    );
+    if (result == null || person == null) return result;
+    return SummaryResult(
+      ko: withHonorific(result.ko, person),
+      en: result.en,
+      nameEn: result.nameEn,
+      factsEn: result.factsEn,
+      tags: result.tags,
     );
   }
 

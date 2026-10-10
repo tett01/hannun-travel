@@ -291,13 +291,12 @@ Future<bool> enrichPending(Session session) async {
     );
     return true;
   }
-  final toSummarize = await Place.db.find(
+  final toSummarize = (await Place.db.find(
     session,
     where: (t) =>
-        t.summaryVersion.notEquals(SummaryService.version) &
-        (t.detailFetchedAt.notEquals(null) | t.sourceId.like('kakao:%')),
+        t.detailFetchedAt.notEquals(null) | t.sourceId.like('kakao:%'),
     orderBy: (t) => t.id,
-  );
+  )).where((p) => p.summaryVersion < SummaryService.versionFor(p)).toList();
   // Korean places first: they are the demo and had the old prompt's errors.
   toSummarize.sort(
     (a, b) =>
@@ -322,7 +321,7 @@ Future<bool> enrichPending(Session session) async {
           place.copyWith(
             nameEn: nameEn,
             summarizedAt: DateTime.now(),
-            summaryVersion: SummaryService.version,
+            summaryVersion: SummaryService.versionFor(place),
           ),
         );
         continue;
@@ -341,7 +340,7 @@ Future<bool> enrichPending(Session session) async {
           factsEn: s.factsEn,
           tags: s.tags,
           summarizedAt: DateTime.now(),
-          summaryVersion: SummaryService.version,
+          summaryVersion: SummaryService.versionFor(place),
         ),
       );
       session.log('[sync] summarized ${place.name}');
