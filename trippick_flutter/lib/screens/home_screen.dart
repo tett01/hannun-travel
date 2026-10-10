@@ -135,10 +135,14 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Align(
                   alignment: Alignment.centerLeft,
-                  child: LocationButton(),
+                  child: Image.asset(
+                    'assets/images/logo_main.png',
+                    height: 52,
+                    semanticLabel: '한눈에여행 Hannun Travel',
+                  ),
                 ),
               ),
               TextButton(
@@ -152,7 +156,9 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
+          const Align(alignment: Alignment.centerLeft, child: LocationButton()),
+          const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: SearchField(onChanged: (v) => setState(() => _query = v)),
