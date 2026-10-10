@@ -6,6 +6,7 @@ import '../generated/protocol.dart';
 import 'demo_city.dart';
 import 'osm_service.dart';
 import 'place_sync.dart';
+import 'summary_service.dart';
 
 /// Accessed from the app as `client.place`.
 class PlaceEndpoint extends Endpoint {
@@ -28,7 +29,16 @@ class PlaceEndpoint extends Endpoint {
     final places = <Place>[];
     for (final p in candidates) {
       p.distance = distanceMeters(lat, lng, p.lat, p.lng);
-      if (p.distance! <= DemoCity.radius) places.add(p);
+      if (p.distance! > DemoCity.radius) continue;
+      // Korean summaries from the old prompt had factual errors: hide them
+      // until redone, so the app shows the official info instead.
+      if (p.summaryVersion != SummaryService.version &&
+          !p.sourceId.startsWith('osm:')) {
+        p
+          ..highlightKo = null
+          ..highlightEn = null;
+      }
+      places.add(p);
     }
     places.sort((a, b) => a.distance!.compareTo(b.distance!));
     return places;

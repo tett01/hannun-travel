@@ -12,7 +12,6 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
-import 'package:trippick_client/src/protocol/places/place.dart' as _itawvtbq;
 import 'package:trippick_client/src/protocol/places/user_review.dart'
     as _iqsxj9y5;
 import 'places/place.dart' as _ion0otjm;
@@ -98,10 +97,6 @@ class Protocol extends _isc.SerializationManager {
                       MapEntry(deserialize<String>(k), deserialize<String>(v)),
                 )
               : null)
-          as T;
-    }
-    if (t == List<_itawvtbq.Place>) {
-      return (data as List).map((e) => deserialize<_itawvtbq.Place>(e)).toList()
           as T;
     }
     if (t == List<_iqsxj9y5.UserReview>) {
