@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -57,14 +59,24 @@ class _AppShellState extends State<AppShell> {
   bool _loading = true;
   Object? _error;
 
-  Future<void> _load() async {
+  Timer? _retry;
+  int _retries = 0;
+
+  Future<void> _load({bool auto = false}) async {
+    _retry?.cancel();
+    if (!auto) _retries = 0;
     setState(() {
-      _loading = true;
+      _loading = !auto;
       _error = null;
     });
     try {
       await loadPlaces();
       if (mounted) setState(() => _loading = false);
+      // A new area may still be collecting on the server: check back soon.
+      if (placesStore.value.isEmpty && _retries < 8) {
+        _retries++;
+        _retry = Timer(const Duration(seconds: 8), () => _load(auto: true));
+      }
     } catch (e) {
       debugPrint('loadPlaces failed: $e');
       if (mounted) {
@@ -109,6 +121,7 @@ class _AppShellState extends State<AppShell> {
     lang.removeListener(_onLang);
     placesStore.removeListener(_onLang);
     locationStore.removeListener(_load);
+    _retry?.cancel();
     super.dispose();
   }
 

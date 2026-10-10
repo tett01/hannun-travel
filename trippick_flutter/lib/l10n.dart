@@ -90,7 +90,10 @@ const _strings = <String, List<String>>{
   'load_error': ['서버에 연결하지 못했어요', "Couldn't reach the server"],
   'load_error_sub': ['잠시 후 다시 시도해 주세요', 'Please try again in a moment'],
   'preparing': ['장소 정보를 준비하고 있어요', 'Getting places ready'],
-  'preparing_sub': ['리뷰를 모아 요약하는 중이에요', 'Collecting and summarizing reviews'],
+  'preparing_sub': [
+    '처음 가는 지역이라 장소를 모으고 있어요. 잠시 후 자동으로 새로고침돼요',
+    'Gathering places for a new area. This page refreshes automatically',
+  ],
   'retry': ['다시 시도', 'Retry'],
   'pick_location': ['어디 주변을 볼까요?', 'Where do you want to explore?'],
   'use_current': ['현재 위치', 'My current location'],

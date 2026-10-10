@@ -55,18 +55,37 @@ Future<void> ensureArea(Session session, double lat, double lng) async {
     );
   }
 
+  // Collection runs in its own session so it can outlive this request.
   final key = '${(lat * 100).round()}:${(lng * 100).round()}';
-  final running = _collecting[key];
-  if (running != null) return running;
+  final job = _collecting[key] ??= _collectInOwnSession(lat, lng).whenComplete(
+    () {
+      _collecting.remove(key);
+      unawaited(enrichInBackground());
+    },
+  );
 
-  final job = _collectArea(session, lat, lng);
-  _collecting[key] = job;
+  // Hosting gateways cut requests at ~40s. Wait at most 25s; if collection
+  // is slower, return what is there now and the app retries shortly.
   try {
-    await job;
-  } finally {
-    _collecting.remove(key)?.ignore();
+    await job.timeout(const Duration(seconds: 25));
+  } on TimeoutException {
+    session.log('[sync] collection near $lat,$lng still running');
   }
-  unawaited(enrichInBackground());
+}
+
+Future<void> _collectInOwnSession(double lat, double lng) async {
+  final session = await Serverpod.instance.createSession();
+  try {
+    await _collectArea(session, lat, lng);
+  } catch (e, st) {
+    session.log(
+      '[sync] collect failed: $e',
+      level: LogLevel.error,
+      stackTrace: st,
+    );
+  } finally {
+    await session.close();
+  }
 }
 
 Future<void> _collectArea(Session session, double lat, double lng) async {
