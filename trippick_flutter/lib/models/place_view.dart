@@ -87,7 +87,45 @@ class PlaceView {
 
   bool get _en => lang.value == Lang.en;
   String get displayName => _en ? nameEn : name;
-  ReviewSummaryView? get highlight => _en ? highlightEn : highlightKo;
+  ReviewSummaryView? get _aiHighlight => _en ? highlightEn : highlightKo;
+
+  /// AI 요약, 아직 없으면 공식 정보를 그대로 옮긴 요약.
+  ReviewSummaryView? get highlight => _aiHighlight ?? officialExcerpt;
+
+  /// [highlight]가 AI 요약이 아니라 공식 정보 발췌인지.
+  bool get highlightIsExcerpt => _aiHighlight == null && highlight != null;
+
+  /// AI 없이 공식 정보에서 바로 뽑은 3줄 (AI 한도와 무관, 지어내지 않음).
+  /// 관광공사 소개는 한국어라 영어 모드에서는 위키백과 소개만 씀.
+  ReviewSummaryView? get officialExcerpt {
+    final f = facts; // 영어 번역은 AI 요약과 함께 생기므로 원문 사용
+    final useOverview = !_en || source == 'osm';
+    var good = '';
+    final text = (useOverview ? overview : null)?.trim() ?? '';
+    if (text.isNotEmpty) {
+      final end = RegExp(r'[.!?。](\s|$)').firstMatch(text)?.start;
+      good = end == null ? text : text.substring(0, end + 1);
+      if (good.length > 80) good = '${good.substring(0, 78)}…';
+    }
+    if (_en && source != 'osm') return null;
+
+    final cautions = <String>[
+      if (f['closed'] != null && !RegExp('연중무휴|없음').hasMatch(f['closed']!))
+        '${t('fact_closed')}: ${f['closed']}',
+      ?RegExp(
+        r'(준비시간|브레이크타임|브레이크 타임|휴게시간)[^-/,]*',
+      ).firstMatch(f['hours'] ?? '')?.group(0)?.trim(),
+      if ((f['parking'] ?? '').contains('불가')) '${t('fact_parking')}: 불가',
+    ];
+    final tipKey = ['signature', 'fee', 'reservation'].firstWhere(
+      (k) => f[k] != null,
+      orElse: () => '',
+    );
+    final tip = tipKey.isEmpty ? '' : '${t('fact_$tipKey')}: ${f[tipKey]}';
+    if (good.isEmpty && cautions.isEmpty && tip.isEmpty) return null;
+    return ReviewSummaryView(good: good, bad: cautions.join(' · '), tip: tip);
+  }
+
   ReviewSummaryView? get reviewSummary =>
       _en ? reviewSummaryEn : reviewSummaryKo;
 

@@ -54,6 +54,8 @@ const _strings = <String, List<String>>{
   'tip': ['팁', 'Tip'],
   'highlight': ['한눈 요약', 'At a glance'],
   'highlight_basis': ['한국관광공사 정보 기반', 'From official tourism info'],
+  'excerpt': ['공식 정보', 'Official info'],
+  'excerpt_basis': ['AI 요약 준비 중', 'AI summary coming soon'],
   'hl_good': ['특징', 'Highlight'],
   'hl_bad': ['알아둘 점', 'Good to know'],
   'no_summary': [

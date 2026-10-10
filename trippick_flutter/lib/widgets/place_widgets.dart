@@ -163,7 +163,13 @@ class SummaryBlock extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      t(useReview ? 'summary' : 'highlight'),
+                      t(
+                        useReview
+                            ? 'summary'
+                            : place.highlightIsExcerpt
+                            ? 'excerpt'
+                            : 'highlight',
+                      ),
                       style: AppText.caption.copyWith(
                         fontWeight: FontWeight.w600,
                         color: AppColors.sub,
@@ -173,6 +179,8 @@ class SummaryBlock extends StatelessWidget {
                     Text(
                       useReview
                           ? t('summary_basis', n: place.reviewSummaryBasis)
+                          : place.highlightIsExcerpt
+                          ? t('excerpt_basis')
                           : t(
                               place.source == 'osm'
                                   ? 'highlight_basis_osm'
