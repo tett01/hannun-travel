@@ -194,6 +194,22 @@ JSON으로만 답한다: {"name_en": "..."}''';
     return null;
   }
 
+  /// Drops a "good to know" line that only repeats ordinary hours or
+  /// "open every day": it has to name an actual restriction.
+  static (ReviewSummary, ReviewSummary) withoutTrivialCaution(
+    ReviewSummary ko,
+    ReviewSummary en,
+  ) {
+    final caution = RegExp(
+      '휴무|휴관|휴일|불가|없음|없다|없고|없으|브레이크|준비시간|휴게|대기|예약|'
+      '마감|마지막 주문|요금|유료|입장료|주의|제한|어렵|문의|변동|공사',
+    );
+    if (ko.bad.isEmpty || caution.hasMatch(ko.bad.replaceAll('연중무휴', ''))) {
+      return (ko, en);
+    }
+    return (ko.copyWith(bad: ''), en.copyWith(bad: ''));
+  }
+
   static Map<String, dynamic> _json(String content) =>
       jsonDecode(
             content.substring(
@@ -222,9 +238,13 @@ JSON으로만 답한다: {"name_en": "..."}''';
       tip: line(m['tip']),
     );
     final factsEn = json['facts_en'];
+    final (ko, en) = withoutTrivialCaution(
+      summary(json['ko'] as Map<String, dynamic>),
+      summary(json['en'] as Map<String, dynamic>),
+    );
     return SummaryResult(
-      ko: summary(json['ko'] as Map<String, dynamic>),
-      en: summary(json['en'] as Map<String, dynamic>),
+      ko: ko,
+      en: en,
       nameEn: '${json['name_en'] ?? ''}'.trim(),
       factsEn: {
         if (factsEn is Map)

@@ -37,6 +37,15 @@ class PlaceEndpoint extends Endpoint {
         p
           ..highlightKo = null
           ..highlightEn = null;
+      } else if (p.highlightKo != null && p.highlightEn != null) {
+        // Also cleans summaries saved before this check existed.
+        final (ko, en) = SummaryService.withoutTrivialCaution(
+          p.highlightKo!,
+          p.highlightEn!,
+        );
+        p
+          ..highlightKo = ko
+          ..highlightEn = en;
       }
       places.add(p);
     }
