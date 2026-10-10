@@ -1,0 +1,13 @@
+### A review written in the app.
+class: UserReview
+table: user_review
+fields:
+  placeId: int
+  author: String
+  ### 1 to 5
+  rating: int
+  text: String
+  createdAt: DateTime, default=now
+indexes:
+  user_review_place_idx:
+    fields: placeId

@@ -1,0 +1,30 @@
+services:
+  # Development services
+  postgres:
+    image: ghcr.io/serverpod/postgres:16
+    ports:
+      - "8090:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: trippick
+      POSTGRES_PASSWORD: "chAM1o69rmnf6P6mxAjvpu3rB9O_hm6U"
+    volumes:
+      - trippick_data:/var/lib/postgresql/data
+
+
+  # Test services
+  postgres_test:
+    image: ghcr.io/serverpod/postgres:16
+    ports:
+      - "9090:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: trippick_test
+      POSTGRES_PASSWORD: "DXYjaDMT-vSW_mSECFoujFr036Is1_FL"
+    volumes:
+      - trippick_test_data:/var/lib/postgresql/data
+
+
+volumes:
+  trippick_data:
+  trippick_test_data:

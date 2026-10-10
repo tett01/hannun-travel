@@ -1,0 +1,8 @@
+### An area whose places have already been collected from TourAPI / Kakao.
+class: CollectedArea
+table: collected_area
+serverOnly: true
+fields:
+  lat: double
+  lng: double
+  collectedAt: DateTime, default=now

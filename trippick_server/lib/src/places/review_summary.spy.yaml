@@ -1,0 +1,8 @@
+### Three-line AI summary.
+### For official info: good = highlights, bad = good to know, tip = tip.
+### For user reviews: good = pros, bad = cons, tip = tip.
+class: ReviewSummary
+fields:
+  good: String
+  bad: String
+  tip: String
