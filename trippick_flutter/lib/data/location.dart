@@ -76,7 +76,9 @@ final locationStore = ValueNotifier<AppLocation>(presetLocations.first);
 bool inKorea(double lat, double lng) =>
     lat >= 33.0 && lat <= 38.7 && lng >= 124.5 && lng <= 131.9;
 
-enum LocateResult { ok, denied, failed }
+/// [blocked]: the user refused before, so the browser or OS will not ask
+/// again until it is re-enabled in settings.
+enum LocateResult { ok, denied, blocked, failed }
 
 /// Tries to use the device's position. On success updates [locationStore]
 /// with the neighborhood name from the server.
@@ -89,8 +91,10 @@ Future<LocateResult> useCurrentLocation() async {
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
     }
-    if (permission == LocationPermission.denied ||
-        permission == LocationPermission.deniedForever) {
+    if (permission == LocationPermission.deniedForever) {
+      return LocateResult.blocked;
+    }
+    if (permission == LocationPermission.denied) {
       return LocateResult.denied;
     }
     final pos = await Geolocator.getCurrentPosition(

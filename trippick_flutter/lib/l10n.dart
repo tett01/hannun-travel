@@ -106,6 +106,30 @@ const _strings = <String, List<String>>{
     "You're outside Korea — showing a featured area",
   ],
   'loc_failed': ['현재 위치를 찾지 못했어요', "Couldn't get your location"],
+  'loc_blocked': [
+    '위치 권한이 꺼져 있어 기본 위치로 보여드려요',
+    'Location access is blocked — showing a featured area',
+  ],
+  'loc_how': ['켜는 방법', 'How to turn on'],
+  'loc_help_title': ['위치 권한 다시 켜기', 'Turn location back on'],
+  'loc_help_web': [
+    '한 번 거절하면 브라우저가 다시 묻지 않아요.\n\n'
+        '1. 주소창 왼쪽의 아이콘(🔒 또는 ⚙︎)을 누르세요\n'
+        '2. "위치"를 "허용"으로 바꾸세요\n'
+        '3. 페이지를 새로고침하세요\n\n'
+        'iPhone Safari: 설정 앱 → Safari → 위치 → 허용',
+    "Once you say no, the browser won't ask again.\n\n"
+        '1. Tap the icon left of the address bar (🔒 or ⚙︎)\n'
+        '2. Set "Location" to "Allow"\n'
+        '3. Reload the page\n\n'
+        'iPhone Safari: Settings app → Safari → Location → Allow',
+  ],
+  'loc_help_app': [
+    '한 번 거절하면 앱이 다시 묻지 못해요. 설정에서 위치 권한을 허용해 주세요.',
+    "Once you say no, the app can't ask again. Allow location in Settings.",
+  ],
+  'open_settings': ['설정 열기', 'Open Settings'],
+  'close': ['닫기', 'Close'],
   'featured_areas': ['추천 지역 · 한국', 'Featured · Korea'],
   'abroad': ['추천 지역 · 해외', 'Featured · Abroad'],
   'highlight_basis_osm': [

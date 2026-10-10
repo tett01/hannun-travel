@@ -12,6 +12,7 @@ import 'screens/home_screen.dart';
 import 'screens/map_screen.dart';
 import 'screens/saved_screen.dart';
 import 'theme.dart';
+import 'widgets/location_picker.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -107,13 +108,7 @@ class _AppShellState extends State<AppShell> {
     if (result == LocateResult.ok) return; // listener loads places
     await _load();
     if (!mounted) return;
-    final message = switch (result) {
-      LocateResult.denied => t('loc_denied'),
-      _ => t('loc_failed'),
-    };
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    showLocationResult(context, result);
   }
 
   @override
