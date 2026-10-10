@@ -151,6 +151,8 @@ void withServerpod(
 }
 
 class TestEndpoints {
+  late final _PlaceEndpoint place;
+
   late final _ReviewEndpoint review;
 }
 
@@ -161,10 +163,97 @@ class _InternalTestEndpoints extends TestEndpoints
     _is.SerializationManager serializationManager,
     _is.EndpointDispatch endpoints,
   ) {
+    place = _PlaceEndpoint(
+      endpoints,
+      serializationManager,
+    );
     review = _ReviewEndpoint(
       endpoints,
       serializationManager,
     );
+  }
+}
+
+class _PlaceEndpoint {
+  _PlaceEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<List<_i8c2er40.Place>> nearby(
+    _ist.TestSessionBuilder sessionBuilder,
+    double lat,
+    double lng,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'place',
+            method: 'nearby',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'place',
+          methodName: 'nearby',
+          parameters: _ist.testObjectToJson({
+            'lat': lat,
+            'lng': lng,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<List<_i8c2er40.Place>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<String> regionName(
+    _ist.TestSessionBuilder sessionBuilder,
+    double lat,
+    double lng,
+    String language,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'place',
+            method: 'regionName',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'place',
+          methodName: 'regionName',
+          parameters: _ist.testObjectToJson({
+            'lat': lat,
+            'lng': lng,
+            'language': language,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<String>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
   }
 }
 

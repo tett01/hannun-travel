@@ -11,12 +11,19 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _is;
+import '../places/place_endpoint.dart' as _iyw3o9dp;
 import '../places/review_endpoint.dart' as _iptyoesq;
 
 class Endpoints extends _is.EndpointDispatch {
   @override
   void initializeEndpoints(_is.Server server) {
     var endpoints = <String, _is.Endpoint>{
+      'place': _iyw3o9dp.PlaceEndpoint()
+        ..initialize(
+          server,
+          'place',
+          null,
+        ),
       'review': _iptyoesq.ReviewEndpoint()
         ..initialize(
           server,
@@ -24,6 +31,67 @@ class Endpoints extends _is.EndpointDispatch {
           null,
         ),
     };
+    connectors['place'] = _is.EndpointConnector(
+      name: 'place',
+      endpoint: endpoints['place']!,
+      methodConnectors: {
+        'nearby': _is.MethodConnector(
+          name: 'nearby',
+          params: {
+            'lat': _is.ParameterDescription(
+              name: 'lat',
+              type: _is.getType<double>(),
+              nullable: false,
+            ),
+            'lng': _is.ParameterDescription(
+              name: 'lng',
+              type: _is.getType<double>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['place'] as _iyw3o9dp.PlaceEndpoint).nearby(
+                session,
+                params['lat'],
+                params['lng'],
+              ),
+        ),
+        'regionName': _is.MethodConnector(
+          name: 'regionName',
+          params: {
+            'lat': _is.ParameterDescription(
+              name: 'lat',
+              type: _is.getType<double>(),
+              nullable: false,
+            ),
+            'lng': _is.ParameterDescription(
+              name: 'lng',
+              type: _is.getType<double>(),
+              nullable: false,
+            ),
+            'language': _is.ParameterDescription(
+              name: 'language',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['place'] as _iyw3o9dp.PlaceEndpoint).regionName(
+                    session,
+                    params['lat'],
+                    params['lng'],
+                    params['language'],
+                  ),
+        ),
+      },
+    );
     connectors['review'] = _is.EndpointConnector(
       name: 'review',
       endpoint: endpoints['review']!,
