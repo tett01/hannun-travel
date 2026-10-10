@@ -39,6 +39,7 @@ PlaceView toView(Place p, {int? distance}) => PlaceView(
     (c) => c.name == p.category,
     orElse: () => PlaceCategory.sight,
   ),
+  subcategory: p.subcategory,
   address: p.address,
   lat: p.lat,
   lng: p.lng,
@@ -49,11 +50,15 @@ PlaceView toView(Place p, {int? distance}) => PlaceView(
   source: p.sourceId.split(':').first,
   tel: p.tel,
   imageUrl: p.imageUrl,
+  images: p.images ?? const [],
   overview: p.overview,
   facts: {
     for (final e in (p.facts ?? const <String, String>{}).entries)
       if (!e.key.startsWith('_') && e.key != 'contentTypeId') e.key: e.value,
   },
+  factsEn: p.factsEn ?? const {},
+  modified: DateTime.tryParse(p.facts?['_modified'] ?? ''),
+  isArea: p.facts?['_area'] == 'true',
   highlightKo: _summary(p.highlightKo),
   highlightEn: _summary(p.highlightEn),
   reviewSummaryKo: _summary(p.reviewSummaryKo),

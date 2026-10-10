@@ -96,7 +96,7 @@ class CategoryTabs extends StatelessWidget {
   }
 }
 
-/// 취향 칩 — 선택되면 검정 배경
+/// 취향 칩 (전체 탭에서): 힐링 / 액티비티 / 맛집 탐방 / 사진 명소
 class TasteChips extends StatelessWidget {
   const TasteChips({
     super.key,
@@ -110,19 +110,64 @@ class TasteChips extends StatelessWidget {
   static const tastes = ['healing', 'activity', 'food', 'photo'];
 
   @override
+  Widget build(BuildContext context) => _ChipRow(
+    items: [for (final k in tastes) (k, t('taste_$k'))],
+    selected: selected,
+    onChanged: (k) => onChanged(k == selected ? null : k),
+  );
+}
+
+/// 세부 분류 칩 (카테고리 탭 아래): 전체 · 한식 · 일식 · 카페 …
+/// 지금 목록에 있는 분류만 보여줌.
+class SubcategoryChips extends StatelessWidget {
+  const SubcategoryChips({
+    super.key,
+    required this.available,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final List<String> available;
+  final String? selected;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) => _ChipRow(
+    items: [
+      (null, t('sub_all')),
+      for (final k in available) (k, t('sub_$k')),
+    ],
+    selected: selected,
+    onChanged: onChanged,
+  );
+}
+
+/// 가로 스크롤 칩 한 줄 — 선택되면 검정 배경
+class _ChipRow extends StatelessWidget {
+  const _ChipRow({
+    required this.items,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final List<(String?, String)> items;
+  final String? selected;
+  final ValueChanged<String?> onChanged;
+
+  @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: 54,
       child: ListView.separated(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
         scrollDirection: Axis.horizontal,
-        itemCount: tastes.length,
+        itemCount: items.length,
         separatorBuilder: (_, _) => const SizedBox(width: 6),
         itemBuilder: (_, i) {
-          final key = tastes[i];
+          final (key, label) = items[i];
           final on = key == selected;
           return GestureDetector(
-            onTap: () => onChanged(on ? null : key),
+            onTap: () => onChanged(key),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -133,7 +178,7 @@ class TasteChips extends StatelessWidget {
                 border: Border.all(color: on ? AppColors.ink : AppColors.line),
               ),
               child: Text(
-                t('taste_$key'),
+                label,
                 style: AppText.body.copyWith(
                   fontSize: 13,
                   color: on ? Colors.white : AppColors.sub,

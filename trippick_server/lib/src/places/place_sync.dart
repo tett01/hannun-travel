@@ -6,6 +6,7 @@ import '../generated/protocol.dart';
 import 'demo_city.dart';
 import 'kakao_service.dart';
 import 'osm_service.dart';
+import 'subcategory.dart';
 import 'summary_service.dart';
 import 'tour_service.dart';
 
@@ -174,20 +175,24 @@ Future<void> _collectOverseas(
 
 bool _enriching = false;
 bool _enrichAgain = false;
+Timer? _resumeTimer;
 
 /// Runs [enrichPending] in its own session; overlapping calls are merged.
+/// If the free AI limits stop it early, it resumes by itself later.
 Future<void> enrichInBackground() async {
   if (_enriching) {
     _enrichAgain = true;
     return;
   }
   _enriching = true;
+  _resumeTimer?.cancel();
+  var unfinished = false;
   try {
     do {
       _enrichAgain = false;
       final session = await Serverpod.instance.createSession();
       try {
-        await enrichPending(session);
+        unfinished = !await enrichPending(session);
       } catch (e, st) {
         session.log('[sync] failed: $e', level: LogLevel.error, stackTrace: st);
       } finally {
@@ -197,17 +202,25 @@ Future<void> enrichInBackground() async {
   } finally {
     _enriching = false;
   }
+  if (unfinished) {
+    _resumeTimer = Timer(const Duration(minutes: 30), enrichInBackground);
+  }
 }
 
-/// Fills official details (TourAPI) and AI summaries for places missing them.
-/// Skips work already done, so it is safe to run repeatedly.
-Future<void> enrichPending(Session session) async {
+/// Fills official details (TourAPI), kinds, photos and AI summaries for
+/// places missing them. Skips work already done, so it is safe to run
+/// repeatedly. Returns false if summaries are left for later (AI limits).
+Future<bool> enrichPending(Session session) async {
   final tourKey = _key(session, 'tourApiKey');
   if (tourKey.isNotEmpty) {
     final tour = TourService(tourKey);
+    // Places stored before kinds and photos existed are fetched again.
     final pending = await Place.db.find(
       session,
-      where: (t) => t.detailFetchedAt.equals(null) & t.sourceId.like('tour:%'),
+      where: (t) =>
+          (t.detailFetchedAt.equals(null) | t.subcategory.equals(null)) &
+          t.sourceId.like('tour:%'),
+      orderBy: (t) => t.id,
     );
     for (final place in pending) {
       try {
@@ -215,6 +228,27 @@ Future<void> enrichPending(Session session) async {
       } catch (e) {
         session.log(
           '[sync] detail ${place.name} failed: $e',
+          level: LogLevel.warning,
+        );
+      }
+    }
+  }
+
+  final kakao = kakaoServiceFor(session);
+  if (kakao != null) {
+    final pending = await Place.db.find(
+      session,
+      where: (t) => t.subcategory.equals(null) & t.sourceId.like('kakao:%'),
+    );
+    for (final place in pending) {
+      try {
+        await Place.db.updateRow(
+          session,
+          place.copyWith(subcategory: await kakao.subcategoryOf(place)),
+        );
+      } catch (e) {
+        session.log(
+          '[sync] kakao kind ${place.name} failed: $e',
           level: LogLevel.warning,
         );
       }
@@ -236,6 +270,18 @@ Future<void> enrichPending(Session session) async {
       );
     }
   }
+  final osmNoKind = await Place.db.find(
+    session,
+    where: (t) => t.subcategory.equals(null) & t.sourceId.like('osm:%'),
+  );
+  for (final place in osmNoKind) {
+    await Place.db.updateRow(
+      session,
+      place.copyWith(
+        subcategory: Subcategory.fromOsm(place.category, {...?place.facts}),
+      ),
+    );
+  }
 
   final summarizer = summaryServiceFor(session);
   if (summarizer == null) {
@@ -243,46 +289,71 @@ Future<void> enrichPending(Session session) async {
       '[sync] groqApiKey not set; skipping summaries',
       level: LogLevel.warning,
     );
-    return;
+    return true;
   }
   final toSummarize = await Place.db.find(
     session,
     where: (t) =>
-        t.summarizedAt.equals(null) & t.detailFetchedAt.notEquals(null),
+        t.summaryVersion.notEquals(SummaryService.version) &
+        (t.detailFetchedAt.notEquals(null) | t.sourceId.like('kakao:%')),
+    orderBy: (t) => t.id,
   );
+  // Korean places first: they are the demo and had the old prompt's errors.
+  toSummarize.sort(
+    (a, b) =>
+        (a.sourceId.startsWith('osm:') ? 1 : 0) -
+        (b.sourceId.startsWith('osm:') ? 1 : 0),
+  );
+  var done = true;
   for (final place in toSummarize) {
     try {
       final usefulFacts = (place.facts ?? const {}).keys
           .where((k) => !k.startsWith('_') && k != 'contentTypeId')
           .length;
       if ((place.overview ?? '').length <= 20 && usefulFacts < 2) {
-        // Nothing official to summarize: mark done instead of guessing.
+        // Nothing official to summarize: only give it an English name.
+        final nameEn = place.nameEn ?? await summarizer.translateName(place);
+        if (nameEn == null) {
+          done = false;
+          continue;
+        }
         await Place.db.updateRow(
           session,
-          place.copyWith(summarizedAt: DateTime.now()),
+          place.copyWith(
+            nameEn: nameEn,
+            summarizedAt: DateTime.now(),
+            summaryVersion: SummaryService.version,
+          ),
         );
         continue;
       }
       final s = await summarizer.summarizeOfficial(place);
-      if (s == null) continue;
+      if (s == null) {
+        done = false;
+        continue;
+      }
       await Place.db.updateRow(
         session,
         place.copyWith(
           highlightKo: s.ko,
           highlightEn: s.en,
-          nameEn: s.nameEn.isEmpty ? null : s.nameEn,
+          nameEn: s.nameEn.isEmpty ? place.nameEn : s.nameEn,
+          factsEn: s.factsEn,
           tags: s.tags,
           summarizedAt: DateTime.now(),
+          summaryVersion: SummaryService.version,
         ),
       );
       session.log('[sync] summarized ${place.name}');
     } catch (e) {
+      done = false;
       session.log(
         '[sync] summary ${place.name} failed: $e',
         level: LogLevel.warning,
       );
     }
   }
+  return done;
 }
 
 /// Called on server start: collect the default area if needed, then fill gaps.

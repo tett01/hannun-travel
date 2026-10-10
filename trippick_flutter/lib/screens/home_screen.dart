@@ -18,6 +18,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   PlaceCategory? _category;
+  String? _subcategory;
   String? _taste;
   String _query = '';
 
@@ -25,6 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final q = _query.trim().toLowerCase();
     final list = widget.places.where((p) {
       if (_category != null && p.category != _category) return false;
+      if (_subcategory != null && p.subcategory != _subcategory) return false;
       if (q.isEmpty) return true;
       return p.name.toLowerCase().contains(q) ||
           p.nameEn.toLowerCase().contains(q);
@@ -35,11 +37,23 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final list = _filtered;
-    final featured = recommend(
-      widget.places,
-      _taste,
-    ).where((p) => p.imageUrl != null || p.oneLiner != null).take(5).toList();
+    // 취향을 고르면 그 취향에 맞는 곳만 (안 맞는 곳으로 채우지 않음).
+    final featured = recommend(widget.places, _taste)
+        .where((p) => _taste == null || matchesTaste(p, _taste!))
+        .where((p) => p.imageUrl != null || p.oneLiner != null)
+        .take(5)
+        .toList();
     final showFeatured = _category == null && _query.isEmpty;
+    // 이 카테고리에 실제로 있는 세부 분류만, 정해진 순서대로.
+    final subs = _category == null
+        ? const <String>[]
+        : _subOrder[_category]!
+              .where(
+                (k) => widget.places.any(
+                  (p) => p.category == _category && p.subcategory == k,
+                ),
+              )
+              .toList();
 
     return SafeArea(
       bottom: false,
@@ -53,12 +67,23 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   CategoryTabs(
                     selected: _category,
-                    onChanged: (c) => setState(() => _category = c),
+                    onChanged: (c) => setState(() {
+                      _category = c;
+                      _subcategory = null;
+                    }),
                   ),
-                  TasteChips(
-                    selected: _taste,
-                    onChanged: (v) => setState(() => _taste = v),
-                  ),
+                  // 전체 탭에서는 취향, 카테고리 탭에서는 세부 분류
+                  if (_category == null)
+                    TasteChips(
+                      selected: _taste,
+                      onChanged: (v) => setState(() => _taste = v),
+                    )
+                  else
+                    SubcategoryChips(
+                      available: subs,
+                      selected: _subcategory,
+                      onChanged: (v) => setState(() => _subcategory = v),
+                    ),
                   const Divider(height: 1),
                 ],
               ),
@@ -78,16 +103,24 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             SliverToBoxAdapter(
-              child: SizedBox(
-                height: 222,
-                child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: featured.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 12),
-                  itemBuilder: (_, i) => FeaturedCard(place: featured[i]),
-                ),
-              ),
+              child: featured.isEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                      child: Text(t('no_taste_match'), style: AppText.body),
+                    )
+                  : SizedBox(
+                      height: 222,
+                      child: ListView.separated(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        scrollDirection: Axis.horizontal,
+                        itemCount: featured.length,
+                        separatorBuilder: (_, _) => const SizedBox(width: 12),
+                        itemBuilder: (_, i) => FeaturedCard(
+                          key: ValueKey(featured[i].dbId),
+                          place: featured[i],
+                        ),
+                      ),
+                    ),
             ),
             const SliverToBoxAdapter(
               child: Divider(height: 8, thickness: 8, color: AppColors.soft),
@@ -118,7 +151,8 @@ class _HomeScreenState extends State<HomeScreen> {
           else
             SliverList.separated(
               itemCount: list.length,
-              itemBuilder: (_, i) => PlaceRow(place: list[i]),
+              itemBuilder: (_, i) =>
+                  PlaceRow(key: ValueKey(list[i].dbId), place: list[i]),
               separatorBuilder: (_, _) =>
                   const Divider(height: 1, indent: 20, endIndent: 20),
             ),
@@ -168,6 +202,35 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+
+const _subOrder = {
+  PlaceCategory.sight: [
+    'nature',
+    'history',
+    'culture',
+    'leisure',
+    'landmark',
+    'experience',
+  ],
+  PlaceCategory.food: [
+    'korean',
+    'western',
+    'japanese',
+    'chinese',
+    'cafe',
+    'other',
+  ],
+  PlaceCategory.activity: [
+    'land',
+    'water',
+    'trail',
+    'camping',
+    'experience',
+    'show',
+    'themepark',
+    'other',
+  ],
+};
 
 class _PinnedFilters extends SliverPersistentHeaderDelegate {
   _PinnedFilters({required this.child});

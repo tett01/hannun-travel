@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import '../generated/protocol.dart';
 import 'demo_city.dart';
+import 'subcategory.dart';
 
 /// Korea Tourism Organization TourAPI (KorService2).
 /// License: KOGL Type 1 — free to use and modify with source attribution.
@@ -133,6 +134,11 @@ class TourService {
           sourceId: 'tour:${i['contentid']}',
           name: clean(i['title']),
           category: category,
+          subcategory: Subcategory.fromTour(
+            category,
+            '${i['cat2'] ?? ''}',
+            '${i['cat3'] ?? ''}',
+          ),
           address: clean('${i['addr1'] ?? ''} ${i['addr2'] ?? ''}'),
           lat: double.parse('${i['mapy']}'),
           lng: double.parse('${i['mapx']}'),
@@ -145,7 +151,7 @@ class TourService {
     ];
   }
 
-  /// Fills overview and practical facts for a TourAPI place.
+  /// Fills overview, practical facts, kind and photos for a TourAPI place.
   Future<Place> withDetails(Place place) async {
     final contentId = place.sourceId.substring('tour:'.length);
     final typeId = int.parse(place.facts?['contentTypeId'] ?? '12');
@@ -155,7 +161,14 @@ class TourService {
       'contentId': contentId,
       'contentTypeId': '$typeId',
     });
+    final photos = await _get('detailImage2', {
+      'contentId': contentId,
+      'imageYN': 'Y',
+      'numOfRows': '10',
+    });
 
+    final c = common.isEmpty ? const <String, dynamic>{} : common.first;
+    final cat3 = clean(c['cat3']);
     final facts = <String, String>{'contentTypeId': '$typeId'};
     if (intro.isNotEmpty) {
       for (final MapEntry(key: field, value: key)
@@ -164,9 +177,31 @@ class TourService {
         if (v.isNotEmpty) facts[key] = v;
       }
     }
-    final overview = common.isEmpty ? '' : clean(common.first['overview']);
+    // Hours and closing days of a whole zone or street are not reliable.
+    if (place.category != 'food' &&
+        (isAreaPlace(place.name, place.address) || cat3 == 'A02030600')) {
+      facts
+        ..remove('hours')
+        ..remove('closed');
+      facts['_area'] = 'true';
+    }
+    // When the official info was last updated, e.g. "20250915154025".
+    final modified = clean(c['modifiedtime']);
+    if (modified.length >= 8) facts['_modified'] = modified.substring(0, 8);
+
+    final images = <String>[
+      for (final p in photos)
+        if (clean(p['originimgurl']).isNotEmpty)
+          clean(p['originimgurl']).replaceFirst('http://', 'https://'),
+    ].where((u) => u != place.imageUrl).toSet().toList();
+
+    final overview = clean(c['overview']);
     return place.copyWith(
       overview: overview.isEmpty ? null : overview,
+      subcategory: c.isEmpty
+          ? place.subcategory
+          : Subcategory.fromTour(place.category, clean(c['cat2']), cat3),
+      images: images,
       facts: facts,
       detailFetchedAt: DateTime.now(),
     );

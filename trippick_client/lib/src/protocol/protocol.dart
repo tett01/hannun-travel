@@ -76,6 +76,15 @@ class Protocol extends _isc.SerializationManager {
     if (t == _isc.getType<_ipwgf7iv.UserReview?>()) {
       return (data != null ? _ipwgf7iv.UserReview.fromJson(data) : null) as T;
     }
+    if (t == List<String>) {
+      return (data as List).map((e) => deserialize<String>(e)).toList() as T;
+    }
+    if (t == _isc.getType<List<String>?>()) {
+      return (data != null
+              ? (data as List).map((e) => deserialize<String>(e)).toList()
+              : null)
+          as T;
+    }
     if (t == Map<String, String>) {
       return (data as Map).map(
             (k, v) => MapEntry(deserialize<String>(k), deserialize<String>(v)),
@@ -88,15 +97,6 @@ class Protocol extends _isc.SerializationManager {
                   (k, v) =>
                       MapEntry(deserialize<String>(k), deserialize<String>(v)),
                 )
-              : null)
-          as T;
-    }
-    if (t == List<String>) {
-      return (data as List).map((e) => deserialize<String>(e)).toList() as T;
-    }
-    if (t == _isc.getType<List<String>?>()) {
-      return (data != null
-              ? (data as List).map((e) => deserialize<String>(e)).toList()
               : null)
           as T;
     }

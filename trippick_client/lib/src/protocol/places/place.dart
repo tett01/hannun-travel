@@ -24,13 +24,16 @@ abstract class Place
     required this.name,
     this.nameEn,
     required this.category,
+    this.subcategory,
     required this.address,
     required this.lat,
     required this.lng,
     this.tel,
     this.imageUrl,
+    this.images,
     this.overview,
     this.facts,
+    this.factsEn,
     this.highlightKo,
     this.highlightEn,
     this.reviewSummaryKo,
@@ -41,9 +44,11 @@ abstract class Place
     this.tags,
     this.detailFetchedAt,
     this.summarizedAt,
+    int? summaryVersion,
     this.distance,
   }) : reviewSummaryBasis = reviewSummaryBasis ?? 0,
-       reviewCount = reviewCount ?? 0;
+       reviewCount = reviewCount ?? 0,
+       summaryVersion = summaryVersion ?? 0;
 
   factory Place({
     int? id,
@@ -51,13 +56,16 @@ abstract class Place
     required String name,
     String? nameEn,
     required String category,
+    String? subcategory,
     required String address,
     required double lat,
     required double lng,
     String? tel,
     String? imageUrl,
+    List<String>? images,
     String? overview,
     Map<String, String>? facts,
+    Map<String, String>? factsEn,
     _iy53im0o.ReviewSummary? highlightKo,
     _iy53im0o.ReviewSummary? highlightEn,
     _iy53im0o.ReviewSummary? reviewSummaryKo,
@@ -68,6 +76,7 @@ abstract class Place
     List<String>? tags,
     DateTime? detailFetchedAt,
     DateTime? summarizedAt,
+    int? summaryVersion,
     int? distance,
   }) = _PlaceImpl;
 
@@ -78,16 +87,27 @@ abstract class Place
       name: jsonSerialization['name'] as String,
       nameEn: jsonSerialization['nameEn'] as String?,
       category: jsonSerialization['category'] as String,
+      subcategory: jsonSerialization['subcategory'] as String?,
       address: jsonSerialization['address'] as String,
       lat: (jsonSerialization['lat'] as num).toDouble(),
       lng: (jsonSerialization['lng'] as num).toDouble(),
       tel: jsonSerialization['tel'] as String?,
       imageUrl: jsonSerialization['imageUrl'] as String?,
+      images: jsonSerialization['images'] == null
+          ? null
+          : _in7lcnwt.Protocol().deserialize<List<String>>(
+              jsonSerialization['images'],
+            ),
       overview: jsonSerialization['overview'] as String?,
       facts: jsonSerialization['facts'] == null
           ? null
           : _in7lcnwt.Protocol().deserialize<Map<String, String>>(
               jsonSerialization['facts'],
+            ),
+      factsEn: jsonSerialization['factsEn'] == null
+          ? null
+          : _in7lcnwt.Protocol().deserialize<Map<String, String>>(
+              jsonSerialization['factsEn'],
             ),
       highlightKo: jsonSerialization['highlightKo'] == null
           ? null
@@ -127,6 +147,7 @@ abstract class Place
           : _isc.DateTimeJsonExtension.fromJson(
               jsonSerialization['summarizedAt'],
             ),
+      summaryVersion: jsonSerialization['summaryVersion'] as int?,
       distance: jsonSerialization['distance'] as int?,
     );
   }
@@ -147,6 +168,9 @@ abstract class Place
   /// sight | food | activity
   String category;
 
+  /// Finer kind inside the category, e.g. food -> korean | japanese | cafe.
+  String? subcategory;
+
   String address;
 
   double lat;
@@ -157,11 +181,17 @@ abstract class Place
 
   String? imageUrl;
 
+  /// More photos of the place (TourAPI detailImage2), not including imageUrl.
+  List<String>? images;
+
   /// Official description from TourAPI.
   String? overview;
 
   /// Practical info from TourAPI, e.g. {"hours": "...", "closed": "..."}.
   Map<String, String>? facts;
+
+  /// English translation of facts (same keys), made by the summarizer.
+  Map<String, String>? factsEn;
 
   /// AI summary of the official info: good = highlights, bad = good to know.
   _iy53im0o.ReviewSummary? highlightKo;
@@ -187,6 +217,9 @@ abstract class Place
 
   DateTime? summarizedAt;
 
+  /// Prompt version the summary was made with; older ones are redone.
+  int summaryVersion;
+
   /// Distance from the demo city center in meters (computed per request).
   int? distance;
 
@@ -199,13 +232,16 @@ abstract class Place
     String? name,
     String? nameEn,
     String? category,
+    String? subcategory,
     String? address,
     double? lat,
     double? lng,
     String? tel,
     String? imageUrl,
+    List<String>? images,
     String? overview,
     Map<String, String>? facts,
+    Map<String, String>? factsEn,
     _iy53im0o.ReviewSummary? highlightKo,
     _iy53im0o.ReviewSummary? highlightEn,
     _iy53im0o.ReviewSummary? reviewSummaryKo,
@@ -216,6 +252,7 @@ abstract class Place
     List<String>? tags,
     DateTime? detailFetchedAt,
     DateTime? summarizedAt,
+    int? summaryVersion,
     int? distance,
   });
   @override
@@ -227,13 +264,16 @@ abstract class Place
       'name': name,
       if (nameEn != null) 'nameEn': nameEn,
       'category': category,
+      if (subcategory != null) 'subcategory': subcategory,
       'address': address,
       'lat': lat,
       'lng': lng,
       if (tel != null) 'tel': tel,
       if (imageUrl != null) 'imageUrl': imageUrl,
+      if (images != null) 'images': images?.toJson(),
       if (overview != null) 'overview': overview,
       if (facts != null) 'facts': facts?.toJson(),
+      if (factsEn != null) 'factsEn': factsEn?.toJson(),
       if (highlightKo != null) 'highlightKo': highlightKo?.toJson(),
       if (highlightEn != null) 'highlightEn': highlightEn?.toJson(),
       if (reviewSummaryKo != null) 'reviewSummaryKo': reviewSummaryKo?.toJson(),
@@ -244,6 +284,7 @@ abstract class Place
       if (tags != null) 'tags': tags?.toJson(),
       if (detailFetchedAt != null) 'detailFetchedAt': detailFetchedAt?.toJson(),
       if (summarizedAt != null) 'summarizedAt': summarizedAt?.toJson(),
+      'summaryVersion': summaryVersion,
       if (distance != null) 'distance': distance,
     };
   }
@@ -257,13 +298,16 @@ abstract class Place
       'name': name,
       if (nameEn != null) 'nameEn': nameEn,
       'category': category,
+      if (subcategory != null) 'subcategory': subcategory,
       'address': address,
       'lat': lat,
       'lng': lng,
       if (tel != null) 'tel': tel,
       if (imageUrl != null) 'imageUrl': imageUrl,
+      if (images != null) 'images': images?.toJson(),
       if (overview != null) 'overview': overview,
       if (facts != null) 'facts': facts?.toJson(),
+      if (factsEn != null) 'factsEn': factsEn?.toJson(),
       if (highlightKo != null) 'highlightKo': highlightKo?.toJsonForProtocol(),
       if (highlightEn != null) 'highlightEn': highlightEn?.toJsonForProtocol(),
       if (reviewSummaryKo != null)
@@ -276,6 +320,7 @@ abstract class Place
       if (tags != null) 'tags': tags?.toJson(),
       if (detailFetchedAt != null) 'detailFetchedAt': detailFetchedAt?.toJson(),
       if (summarizedAt != null) 'summarizedAt': summarizedAt?.toJson(),
+      'summaryVersion': summaryVersion,
       if (distance != null) 'distance': distance,
     };
   }
@@ -295,13 +340,16 @@ class _PlaceImpl extends Place {
     required String name,
     String? nameEn,
     required String category,
+    String? subcategory,
     required String address,
     required double lat,
     required double lng,
     String? tel,
     String? imageUrl,
+    List<String>? images,
     String? overview,
     Map<String, String>? facts,
+    Map<String, String>? factsEn,
     _iy53im0o.ReviewSummary? highlightKo,
     _iy53im0o.ReviewSummary? highlightEn,
     _iy53im0o.ReviewSummary? reviewSummaryKo,
@@ -312,6 +360,7 @@ class _PlaceImpl extends Place {
     List<String>? tags,
     DateTime? detailFetchedAt,
     DateTime? summarizedAt,
+    int? summaryVersion,
     int? distance,
   }) : super._(
          id: id,
@@ -319,13 +368,16 @@ class _PlaceImpl extends Place {
          name: name,
          nameEn: nameEn,
          category: category,
+         subcategory: subcategory,
          address: address,
          lat: lat,
          lng: lng,
          tel: tel,
          imageUrl: imageUrl,
+         images: images,
          overview: overview,
          facts: facts,
+         factsEn: factsEn,
          highlightKo: highlightKo,
          highlightEn: highlightEn,
          reviewSummaryKo: reviewSummaryKo,
@@ -336,6 +388,7 @@ class _PlaceImpl extends Place {
          tags: tags,
          detailFetchedAt: detailFetchedAt,
          summarizedAt: summarizedAt,
+         summaryVersion: summaryVersion,
          distance: distance,
        );
 
@@ -349,13 +402,16 @@ class _PlaceImpl extends Place {
     String? name,
     Object? nameEn = _Undefined,
     String? category,
+    Object? subcategory = _Undefined,
     String? address,
     double? lat,
     double? lng,
     Object? tel = _Undefined,
     Object? imageUrl = _Undefined,
+    Object? images = _Undefined,
     Object? overview = _Undefined,
     Object? facts = _Undefined,
+    Object? factsEn = _Undefined,
     Object? highlightKo = _Undefined,
     Object? highlightEn = _Undefined,
     Object? reviewSummaryKo = _Undefined,
@@ -366,6 +422,7 @@ class _PlaceImpl extends Place {
     Object? tags = _Undefined,
     Object? detailFetchedAt = _Undefined,
     Object? summarizedAt = _Undefined,
+    int? summaryVersion,
     Object? distance = _Undefined,
   }) {
     return Place(
@@ -374,15 +431,30 @@ class _PlaceImpl extends Place {
       name: name ?? this.name,
       nameEn: nameEn is String? ? nameEn : this.nameEn,
       category: category ?? this.category,
+      subcategory: subcategory is String? ? subcategory : this.subcategory,
       address: address ?? this.address,
       lat: lat ?? this.lat,
       lng: lng ?? this.lng,
       tel: tel is String? ? tel : this.tel,
       imageUrl: imageUrl is String? ? imageUrl : this.imageUrl,
+      images: images is List<String>?
+          ? images
+          : this.images?.map((e0) => e0).toList(),
       overview: overview is String? ? overview : this.overview,
       facts: facts is Map<String, String>?
           ? facts
           : this.facts?.map(
+              (
+                key0,
+                value0,
+              ) => MapEntry(
+                key0,
+                value0,
+              ),
+            ),
+      factsEn: factsEn is Map<String, String>?
+          ? factsEn
+          : this.factsEn?.map(
               (
                 key0,
                 value0,
@@ -413,6 +485,7 @@ class _PlaceImpl extends Place {
       summarizedAt: summarizedAt is DateTime?
           ? summarizedAt
           : this.summarizedAt,
+      summaryVersion: summaryVersion ?? this.summaryVersion,
       distance: distance is int? ? distance : this.distance,
     );
   }

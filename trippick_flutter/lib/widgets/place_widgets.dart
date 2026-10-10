@@ -25,6 +25,7 @@ class PlaceThumb extends StatelessWidget {
     required this.width,
     required this.height,
     this.radius = 8,
+    this.url,
   });
 
   final PlaceView place;
@@ -32,8 +33,12 @@ class PlaceThumb extends StatelessWidget {
   final double height;
   final double radius;
 
+  /// Photo to show instead of the place's main photo (detail gallery).
+  final String? url;
+
   @override
   Widget build(BuildContext context) {
+    final src = url ?? place.imageUrl;
     final placeholder = Container(
       color: AppColors.soft,
       alignment: Alignment.center,
@@ -48,10 +53,13 @@ class PlaceThumb extends StatelessWidget {
       child: SizedBox(
         width: width,
         height: height,
-        child: place.imageUrl == null
+        child: src == null
             ? placeholder
             : Image.network(
-                place.imageUrl!,
+                src,
+                // A new element per photo: on web the <img> element of a
+                // reused card could otherwise keep showing the old photo.
+                key: ValueKey(src),
                 fit: BoxFit.cover,
                 // On web, load through an <img> element so photos from
                 // servers without CORS headers (TourAPI) still show.
@@ -88,7 +96,7 @@ class SaveButton extends StatelessWidget {
   }
 }
 
-/// "명소 · 540m · ★4.5 (3)"
+/// "맛집 · 일식 · 540m · ★4.5 (3)"
 class PlaceMeta extends StatelessWidget {
   const PlaceMeta({super.key, required this.place, this.showRating = true});
 
@@ -97,7 +105,11 @@ class PlaceMeta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final parts = [place.categoryLabel, place.distanceLabel];
+    final parts = [
+      place.categoryLabel,
+      ?place.subcategoryLabel,
+      place.distanceLabel,
+    ];
     return Row(
       children: [
         Flexible(
@@ -171,13 +183,16 @@ class SummaryBlock extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 8),
-                _line(
-                  t(useReview ? 'good' : 'hl_good'),
-                  s.good,
-                  AppColors.good,
-                ),
-                _line(t(useReview ? 'bad' : 'hl_bad'), s.bad, AppColors.bad),
-                _line(t('tip'), s.tip, AppColors.tip),
+                // 근거가 없어 비워 둔 줄은 보여주지 않음
+                if (s.good.isNotEmpty)
+                  _line(
+                    t(useReview ? 'good' : 'hl_good'),
+                    s.good,
+                    AppColors.good,
+                  ),
+                if (s.bad.isNotEmpty)
+                  _line(t(useReview ? 'bad' : 'hl_bad'), s.bad, AppColors.bad),
+                if (s.tip.isNotEmpty) _line(t('tip'), s.tip, AppColors.tip),
               ],
             ),
     );

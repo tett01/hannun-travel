@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import '../generated/protocol.dart';
 import 'demo_city.dart';
+import 'subcategory.dart';
 
 /// Fallback place source when TourAPI has too few places in a category.
 /// Kakao gives no description or photo, so these places rely on user reviews.
@@ -59,6 +60,22 @@ class KakaoService {
     return (body['documents'] as List).cast<Map<String, dynamic>>();
   }
 
+  /// Kind of a place stored before subcategories existed, found again by
+  /// searching its name next to its coordinates.
+  Future<String> subcategoryOf(Place place) async {
+    final docs = await _get('keyword', {
+      'query': place.name,
+      'x': '${place.lng}',
+      'y': '${place.lat}',
+      'radius': '300',
+      'size': '1',
+    });
+    return Subcategory.fromKakao(
+      place.category,
+      docs.isEmpty ? '' : (docs.first['category_name'] as String?) ?? '',
+    );
+  }
+
   Future<List<Place>> nearby(
     String category,
     int limit,
@@ -92,6 +109,10 @@ class KakaoService {
           sourceId: 'kakao:$id',
           name: d['place_name'] as String,
           category: category,
+          subcategory: Subcategory.fromKakao(
+            category,
+            (d['category_name'] as String?) ?? '',
+          ),
           address: road.isNotEmpty
               ? road
               : (d['address_name'] as String?) ?? '',

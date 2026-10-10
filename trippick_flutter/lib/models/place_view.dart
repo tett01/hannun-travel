@@ -23,6 +23,7 @@ class PlaceView {
     required this.name,
     required this.nameEn,
     required this.category,
+    this.subcategory,
     required this.address,
     required this.lat,
     required this.lng,
@@ -33,8 +34,12 @@ class PlaceView {
     this.ratingAvg,
     this.tel,
     this.imageUrl,
+    this.images = const [],
     this.overview,
     this.facts = const {},
+    this.factsEn = const {},
+    this.modified,
+    this.isArea = false,
     this.highlightKo,
     this.highlightEn,
     this.reviewSummaryKo,
@@ -47,6 +52,9 @@ class PlaceView {
   final String name;
   final String nameEn;
   final PlaceCategory category;
+
+  /// Finer kind inside [category], e.g. korean / cafe (see `sub_*` strings).
+  final String? subcategory;
   final String address;
   final double lat;
   final double lng;
@@ -59,8 +67,18 @@ class PlaceView {
   bool get isOfficial => source == 'tour';
   final String? tel;
   final String? imageUrl;
+
+  /// More photos besides [imageUrl].
+  final List<String> images;
   final String? overview;
   final Map<String, String> facts;
+  final Map<String, String> factsEn;
+
+  /// When the official info was last updated (TourAPI).
+  final DateTime? modified;
+
+  /// A wide area (zone, street, trail) rather than one building.
+  final bool isArea;
   final ReviewSummaryView? highlightKo;
   final ReviewSummaryView? highlightEn;
   final ReviewSummaryView? reviewSummaryKo;
@@ -74,9 +92,22 @@ class PlaceView {
       _en ? reviewSummaryEn : reviewSummaryKo;
 
   /// 카드에 보여줄 한 줄 소개.
-  String? get oneLiner => reviewSummary?.good ?? highlight?.good;
+  String? get oneLiner {
+    final s = reviewSummary?.good ?? highlight?.good;
+    return s == null || s.isEmpty ? null : s;
+  }
+
+  /// Practical info in the current language (Korean if not translated).
+  Map<String, String> get displayFacts =>
+      _en && factsEn.isNotEmpty ? {...facts, ...factsEn} : facts;
+
+  /// All photos, main one first.
+  List<String> get photos => [?imageUrl, ...images];
 
   String get categoryLabel => t('cat_${category.name}');
+
+  String? get subcategoryLabel =>
+      subcategory == null ? null : t('sub_$subcategory');
 
   String get distanceLabel => distance < 1000
       ? '${distance}m'
@@ -101,6 +132,12 @@ void toggleSaved(String id) {
   savedIds.value = next;
 }
 
+/// 취향에 맞는 장소인지. 맛집·놀거리 취향은 카테고리로도 판단.
+bool matchesTaste(PlaceView p, String taste) =>
+    p.tags.contains(taste) ||
+    (taste == 'food' && p.category == PlaceCategory.food) ||
+    (taste == 'activity' && p.category == PlaceCategory.activity);
+
 /// 취향 태그가 맞는 곳 먼저, 다음은 요약·사진이 있는 곳, 그다음 가까운 순.
 List<PlaceView> recommend(List<PlaceView> places, String? taste) {
   int richness(PlaceView p) =>
@@ -111,7 +148,7 @@ List<PlaceView> recommend(List<PlaceView> places, String? taste) {
   list.sort((a, b) {
     if (taste != null) {
       final m =
-          (b.tags.contains(taste) ? 1 : 0) - (a.tags.contains(taste) ? 1 : 0);
+          (matchesTaste(b, taste) ? 1 : 0) - (matchesTaste(a, taste) ? 1 : 0);
       if (m != 0) return m;
     }
     final r = richness(b) - richness(a);

@@ -71,23 +71,16 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
             slivers: [
               SliverAppBar(
                 pinned: true,
-                expandedHeight: p.imageUrl != null ? 260 : 0,
+                expandedHeight: p.photos.isNotEmpty ? 260 : 0,
                 backgroundColor: Colors.white,
                 foregroundColor: AppColors.ink,
                 surfaceTintColor: Colors.white,
                 // White round backgrounds keep icons readable over photos.
                 leading: _RoundIcon(child: BackButton(color: AppColors.ink)),
                 actions: [_RoundIcon(child: SaveButton(id: p.id))],
-                flexibleSpace: p.imageUrl == null
+                flexibleSpace: p.photos.isEmpty
                     ? null
-                    : FlexibleSpaceBar(
-                        background: PlaceThumb(
-                          place: p,
-                          width: double.infinity,
-                          height: 300,
-                          radius: 0,
-                        ),
-                      ),
+                    : FlexibleSpaceBar(background: _PhotoGallery(place: p)),
               ),
               SliverToBoxAdapter(child: _body(p)),
             ],
@@ -160,14 +153,25 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
           if (p.highlight != null) SummaryBlock(place: p, kind: 'highlight'),
           if (p.reviewSummary == null && p.highlight == null)
             SummaryBlock(place: p),
-          if (p.facts.isNotEmpty) ...[
+          if (p.facts.isNotEmpty || p.isArea) ...[
             _sectionTitle(t('info')),
-            if (lang.value == Lang.en && p.isOfficial)
+            if (lang.value == Lang.en && p.isOfficial && p.factsEn.isEmpty)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(t('korean_only'), style: AppText.caption),
               ),
-            for (final e in p.facts.entries) _fact(t('fact_${e.key}'), e.value),
+            if (p.isArea)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(t('area_note'), style: AppText.small),
+              ),
+            for (final e in p.displayFacts.entries)
+              _fact(t('fact_${e.key}'), e.value),
+            if (p.facts.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(t('check_before'), style: AppText.caption),
+              ),
           ],
           // TourAPI text is Korean (hidden in English mode); Wikipedia
           // text is usually English, so it is shown in both modes.
@@ -182,7 +186,16 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
           if (p.isOfficial || p.source == 'osm') ...[
             const SizedBox(height: 12),
             Text(
-              t(p.isOfficial ? 'source_tour' : 'source_osm'),
+              [
+                t(p.isOfficial ? 'source_tour' : 'source_osm'),
+                if (p.modified != null)
+                  t(
+                    'source_updated',
+                    n:
+                        '${p.modified!.year}.'
+                        '${p.modified!.month.toString().padLeft(2, '0')}',
+                  ),
+              ].join(' · '),
               style: AppText.caption,
             ),
           ],
@@ -293,6 +306,57 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
       ],
     ),
   );
+}
+
+/// 장소 사진들 — 옆으로 넘겨 보기, 오른쪽 아래에 "2 / 5".
+class _PhotoGallery extends StatefulWidget {
+  const _PhotoGallery({required this.place});
+
+  final PlaceView place;
+
+  @override
+  State<_PhotoGallery> createState() => _PhotoGalleryState();
+}
+
+class _PhotoGalleryState extends State<_PhotoGallery> {
+  int _page = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final photos = widget.place.photos;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        PageView.builder(
+          itemCount: photos.length,
+          onPageChanged: (i) => setState(() => _page = i),
+          itemBuilder: (_, i) => PlaceThumb(
+            place: widget.place,
+            url: photos[i],
+            width: double.infinity,
+            height: 300,
+            radius: 0,
+          ),
+        ),
+        if (photos.length > 1)
+          Positioned(
+            right: 12,
+            bottom: 12,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: const Color(0x99000000),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '${_page + 1} / ${photos.length}',
+                style: AppText.caption.copyWith(color: Colors.white),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
 }
 
 class _RoundIcon extends StatelessWidget {

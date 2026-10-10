@@ -45,7 +45,10 @@ class SavedScreen extends StatelessWidget {
                       )
                     : ListView.separated(
                         itemCount: list.length,
-                        itemBuilder: (_, i) => PlaceRow(place: list[i]),
+                        itemBuilder: (_, i) => PlaceRow(
+                          key: ValueKey(list[i].dbId),
+                          place: list[i],
+                        ),
                         separatorBuilder: (_, _) =>
                             const Divider(height: 1, indent: 20, endIndent: 20),
                       ),

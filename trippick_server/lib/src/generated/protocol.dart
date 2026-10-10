@@ -108,6 +108,12 @@ class Protocol extends _is.DatabaseSerializationManager {
           dartType: 'String',
         ),
         _isp.ColumnDefinition(
+          name: 'subcategory',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
           name: 'address',
           columnType: _isp.ColumnType.text,
           isNullable: false,
@@ -138,6 +144,12 @@ class Protocol extends _is.DatabaseSerializationManager {
           dartType: 'String?',
         ),
         _isp.ColumnDefinition(
+          name: 'images',
+          columnType: _isp.ColumnType.json,
+          isNullable: true,
+          dartType: 'List<String>?',
+        ),
+        _isp.ColumnDefinition(
           name: 'overview',
           columnType: _isp.ColumnType.text,
           isNullable: true,
@@ -145,6 +157,12 @@ class Protocol extends _is.DatabaseSerializationManager {
         ),
         _isp.ColumnDefinition(
           name: 'facts',
+          columnType: _isp.ColumnType.json,
+          isNullable: true,
+          dartType: 'Map<String,String>?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'factsEn',
           columnType: _isp.ColumnType.json,
           isNullable: true,
           dartType: 'Map<String,String>?',
@@ -210,6 +228,13 @@ class Protocol extends _is.DatabaseSerializationManager {
           columnType: _isp.ColumnType.timestampWithoutTimeZone,
           isNullable: true,
           dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'summaryVersion',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
         ),
       ],
       foreignKeys: [],
@@ -349,6 +374,15 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _is.getType<_ipwgf7iv.UserReview?>()) {
       return (data != null ? _ipwgf7iv.UserReview.fromJson(data) : null) as T;
     }
+    if (t == List<String>) {
+      return (data as List).map((e) => deserialize<String>(e)).toList() as T;
+    }
+    if (t == _is.getType<List<String>?>()) {
+      return (data != null
+              ? (data as List).map((e) => deserialize<String>(e)).toList()
+              : null)
+          as T;
+    }
     if (t == Map<String, String>) {
       return (data as Map).map(
             (k, v) => MapEntry(deserialize<String>(k), deserialize<String>(v)),
@@ -361,15 +395,6 @@ class Protocol extends _is.DatabaseSerializationManager {
                   (k, v) =>
                       MapEntry(deserialize<String>(k), deserialize<String>(v)),
                 )
-              : null)
-          as T;
-    }
-    if (t == List<String>) {
-      return (data as List).map((e) => deserialize<String>(e)).toList() as T;
-    }
-    if (t == _is.getType<List<String>?>()) {
-      return (data != null
-              ? (data as List).map((e) => deserialize<String>(e)).toList()
               : null)
           as T;
     }

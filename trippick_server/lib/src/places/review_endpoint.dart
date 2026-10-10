@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
@@ -55,7 +57,10 @@ class ReviewEndpoint extends Endpoint {
     final summarizer = summaryServiceFor(session);
     if (summarizer != null && reviews.length >= minReviews) {
       try {
-        final s = await summarizer.summarizeReviews(place, reviews);
+        // Stay well under the hosting timeout if the AI is rate limited.
+        final s = await summarizer
+            .summarizeReviews(place, reviews)
+            .timeout(const Duration(seconds: 20));
         if (s != null) {
           updated = updated.copyWith(
             reviewSummaryKo: s.ko,

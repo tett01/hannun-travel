@@ -10,15 +10,21 @@ fields:
   nameEn: String?
   ### sight | food | activity
   category: String
+  ### Finer kind inside the category, e.g. food -> korean | japanese | cafe.
+  subcategory: String?
   address: String
   lat: double
   lng: double
   tel: String?
   imageUrl: String?
+  ### More photos of the place (TourAPI detailImage2), not including imageUrl.
+  images: List<String>?
   ### Official description from TourAPI.
   overview: String?
   ### Practical info from TourAPI, e.g. {"hours": "...", "closed": "..."}.
   facts: Map<String, String>?
+  ### English translation of facts (same keys), made by the summarizer.
+  factsEn: Map<String, String>?
   ### AI summary of the official info: good = highlights, bad = good to know.
   highlightKo: ReviewSummary?
   highlightEn: ReviewSummary?
@@ -33,6 +39,8 @@ fields:
   tags: List<String>?
   detailFetchedAt: DateTime?
   summarizedAt: DateTime?
+  ### Prompt version the summary was made with; older ones are redone.
+  summaryVersion: int, default=0
   ### Distance from the demo city center in meters (computed per request).
   distance: int?, !persist
 indexes:

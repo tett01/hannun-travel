@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import '../generated/protocol.dart';
 import 'demo_city.dart';
+import 'subcategory.dart';
 
 /// Places outside Korea: OpenStreetMap (Overpass API) for places and
 /// Wikipedia for descriptions and photos. Both are free and keyless.
@@ -144,6 +145,7 @@ class OsmService {
           name: displayKo,
           nameEn: '${t['name:en'] ?? name}',
           category: category,
+          subcategory: Subcategory.fromOsm(category, t),
           address: _address(t),
           lat: eLat(e),
           lng: eLng(e),
