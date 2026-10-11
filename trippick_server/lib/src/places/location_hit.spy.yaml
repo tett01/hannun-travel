@@ -1,0 +1,7 @@
+### A place or address found by the location search.
+class: LocationHit
+fields:
+  name: String
+  address: String
+  lat: double
+  lng: double

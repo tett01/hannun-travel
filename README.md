@@ -12,7 +12,7 @@ Built for the Serverpod *Build Something Real* hackathon.
 
 ## Features
 
-- **Nearby, anywhere**: uses your location (or a featured area) and lists places within 6 km, nearest first. The first visit to a new area collects its places on the fly.
+- **Nearby, anywhere**: uses your location, a featured area, or any hotel, address or place you search for (e.g. around the hotel you booked), and lists places within 6 km, nearest first. The first visit to a new area collects its places on the fly.
 - **Korea and the rest of the world**: Korea uses the Korea Tourism Organization's official TourAPI (with photos and visitor info) plus Kakao Local. Everywhere else uses OpenStreetMap and Wikipedia.
 - **Taste-based ranking**: pick Relaxing, Active, Foodie or Photo spots, and places tagged for that taste come first.
 - **AI that cannot invent places**: places only come from TourAPI, Kakao or OpenStreetMap. The AI only summarizes the text it is given, is told to write "No info" rather than guess, and its tags are checked against a fixed list.
@@ -24,9 +24,10 @@ Built for the Serverpod *Build Something Real* hackathon.
 | Piece | What it does |
 | --- | --- |
 | `PlaceEndpoint.nearby(lat, lng)` | Returns places around a point; collects a new area the first time it is requested |
+| `PlaceEndpoint.searchLocation(query, language)` | Finds a hotel, address or place to explore around (Kakao in Korea, OpenStreetMap Nominatim elsewhere) |
 | `PlaceEndpoint.regionName(lat, lng, language)` | Neighborhood name for the header (Kakao in Korea, OpenStreetMap Nominatim elsewhere) |
 | `ReviewEndpoint.add / list` | Stores reviews, updates ratings and regenerates the AI review summary |
-| Models (`.spy.yaml`) | `Place`, `ReviewSummary`, `UserReview`, `CollectedArea` with Postgres tables and migrations |
+| Models (`.spy.yaml`) | `Place`, `ReviewSummary`, `UserReview`, `CollectedArea` with Postgres tables and migrations, plus `LocationHit` for search results |
 | Background sync | On start and after each new area, a background session fills official details, Wikipedia text and AI summaries, skipping finished work |
 | Passwords | API keys live in `config/passwords.yaml` locally and in Serverpod Cloud passwords, never in code |
 

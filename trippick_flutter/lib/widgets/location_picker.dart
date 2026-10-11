@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:trippick_client/trippick_client.dart';
 
+import '../client.dart';
 import '../data/location.dart';
 import '../l10n.dart';
 import '../theme.dart';
@@ -59,7 +61,13 @@ Future<void> showLocationPicker(BuildContext context) {
     ),
     builder: (sheetContext) => SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(8, 20, 8, 8),
+        // Keeps the search field above the on-screen keyboard.
+        padding: EdgeInsets.fromLTRB(
+          8,
+          20,
+          8,
+          8 + MediaQuery.of(sheetContext).viewInsets.bottom,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,6 +75,12 @@ Future<void> showLocationPicker(BuildContext context) {
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
               child: Text(t('pick_location'), style: AppText.section),
+            ),
+            LocationSearch(
+              onPicked: (loc) {
+                Navigator.of(sheetContext).pop();
+                locationStore.value = loc;
+              },
             ),
             ListTile(
               leading: const Icon(
@@ -117,6 +131,129 @@ Future<void> showLocationPicker(BuildContext context) {
       ),
     ),
   );
+}
+
+/// Search box for any place or address, e.g. the area around a hotel booked
+/// for a coming trip. Searches on submit only: OpenStreetMap's Nominatim
+/// forbids search-as-you-type.
+class LocationSearch extends StatefulWidget {
+  const LocationSearch({super.key, required this.onPicked});
+
+  final ValueChanged<AppLocation> onPicked;
+
+  @override
+  State<LocationSearch> createState() => _LocationSearchState();
+}
+
+class _LocationSearchState extends State<LocationSearch> {
+  final _controller = TextEditingController();
+  List<LocationHit>? _hits;
+  bool _loading = false;
+  bool _failed = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _search() async {
+    final query = _controller.text.trim();
+    if (query.isEmpty || _loading) return;
+    setState(() {
+      _loading = true;
+      _failed = false;
+    });
+    try {
+      final hits = await client.place.searchLocation(
+        query,
+        lang.value == Lang.en ? 'en' : 'ko',
+      );
+      if (mounted) setState(() => _hits = hits);
+    } catch (e) {
+      debugPrint('searchLocation failed: $e');
+      if (mounted) setState(() => _failed = true);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hits = _hits;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+          child: TextField(
+            controller: _controller,
+            textInputAction: TextInputAction.search,
+            onSubmitted: (_) => _search(),
+            decoration: InputDecoration(
+              hintText: t('loc_search_hint'),
+              prefixIcon: const Icon(Icons.search_rounded),
+              suffixIcon: _loading
+                  ? const Padding(
+                      padding: EdgeInsets.all(14),
+                      child: SizedBox.square(
+                        dimension: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    )
+                  : IconButton(
+                      icon: const Icon(Icons.arrow_forward_rounded),
+                      tooltip: t('loc_search_go'),
+                      onPressed: _search,
+                    ),
+              isDense: true,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
+        if (_failed)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+            child: Text(t('loc_search_failed'), style: AppText.caption),
+          )
+        else if (hits != null && hits.isEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+            child: Text(t('loc_search_none'), style: AppText.caption),
+          )
+        else if (hits != null)
+          for (final h in hits)
+            ListTile(
+              dense: true,
+              leading: Icon(
+                inKorea(h.lat, h.lng) ? Icons.place_outlined : Icons.public,
+                color: AppColors.accent,
+              ),
+              title: Text(h.name, style: AppText.name),
+              subtitle: h.address.isEmpty
+                  ? null
+                  : Text(
+                      h.address,
+                      style: AppText.caption,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+              onTap: () => widget.onPicked(
+                AppLocation(
+                  lat: h.lat,
+                  lng: h.lng,
+                  labelKo: h.name,
+                  labelEn: h.name,
+                ),
+              ),
+            ),
+        if (hits != null || _failed) const Divider(indent: 16, endIndent: 16),
+      ],
+    );
+  }
 }
 
 /// Snackbar for a failed location attempt. When access is blocked it offers

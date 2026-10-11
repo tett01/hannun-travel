@@ -90,6 +90,31 @@ class Endpoints extends _is.EndpointDispatch {
                     params['language'],
                   ),
         ),
+        'searchLocation': _is.MethodConnector(
+          name: 'searchLocation',
+          params: {
+            'query': _is.ParameterDescription(
+              name: 'query',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'language': _is.ParameterDescription(
+              name: 'language',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['place'] as _iyw3o9dp.PlaceEndpoint)
+                  .searchLocation(
+                    session,
+                    params['query'],
+                    params['language'],
+                  ),
+        ),
       },
     );
     connectors['review'] = _is.EndpointConnector(

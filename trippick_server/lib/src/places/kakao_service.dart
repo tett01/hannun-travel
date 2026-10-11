@@ -44,6 +44,33 @@ class KakaoService {
     ].whereType<String>().where((s) => s.isNotEmpty).join(' ');
   }
 
+  /// Places and addresses matching [query] anywhere in Korea, for the
+  /// location search. Place names first, then plain addresses.
+  Future<List<LocationHit>> search(String query) async {
+    final results = await Future.wait([
+      _get('keyword', {'query': query, 'size': '8'}),
+      _get('address', {'query': query, 'size': '5'}),
+    ]);
+    return [
+      for (final d in results[0])
+        LocationHit(
+          name: d['place_name'] as String,
+          address: ((d['road_address_name'] as String?) ?? '').isNotEmpty
+              ? d['road_address_name'] as String
+              : (d['address_name'] as String?) ?? '',
+          lat: double.parse(d['y'] as String),
+          lng: double.parse(d['x'] as String),
+        ),
+      for (final d in results[1])
+        LocationHit(
+          name: d['address_name'] as String,
+          address: '',
+          lat: double.parse(d['y'] as String),
+          lng: double.parse(d['x'] as String),
+        ),
+    ];
+  }
+
   Future<List<Map<String, dynamic>>> _get(
     String path,
     Map<String, String> params,

@@ -1,6 +1,7 @@
 place:
   - nearby:
   - regionName:
+  - searchLocation:
 review:
   - list:
   - add:

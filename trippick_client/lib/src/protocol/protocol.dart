@@ -12,12 +12,16 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+import 'package:trippick_client/src/protocol/places/location_hit.dart'
+    as _iojwpf7q;
 import 'package:trippick_client/src/protocol/places/place.dart' as _itawvtbq;
 import 'package:trippick_client/src/protocol/places/user_review.dart'
     as _iqsxj9y5;
+import 'places/location_hit.dart' as _icggq6kf;
 import 'places/place.dart' as _ion0otjm;
 import 'places/review_summary.dart' as _ii1d0owx;
 import 'places/user_review.dart' as _ipwgf7iv;
+export 'places/location_hit.dart';
 export 'places/place.dart';
 export 'places/review_summary.dart';
 export 'places/user_review.dart';
@@ -57,6 +61,9 @@ class Protocol extends _isc.SerializationManager {
       }
     }
 
+    if (t == _icggq6kf.LocationHit) {
+      return _icggq6kf.LocationHit.fromJson(data) as T;
+    }
     if (t == _ion0otjm.Place) {
       return _ion0otjm.Place.fromJson(data) as T;
     }
@@ -65,6 +72,9 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _ipwgf7iv.UserReview) {
       return _ipwgf7iv.UserReview.fromJson(data) as T;
+    }
+    if (t == _isc.getType<_icggq6kf.LocationHit?>()) {
+      return (data != null ? _icggq6kf.LocationHit.fromJson(data) : null) as T;
     }
     if (t == _isc.getType<_ion0otjm.Place?>()) {
       return (data != null ? _ion0otjm.Place.fromJson(data) : null) as T;
@@ -104,6 +114,12 @@ class Protocol extends _isc.SerializationManager {
       return (data as List).map((e) => deserialize<_itawvtbq.Place>(e)).toList()
           as T;
     }
+    if (t == List<_iojwpf7q.LocationHit>) {
+      return (data as List)
+              .map((e) => deserialize<_iojwpf7q.LocationHit>(e))
+              .toList()
+          as T;
+    }
     if (t == List<_iqsxj9y5.UserReview>) {
       return (data as List)
               .map((e) => deserialize<_iqsxj9y5.UserReview>(e))
@@ -115,6 +131,7 @@ class Protocol extends _isc.SerializationManager {
 
   static String? getClassNameForType(Type type) {
     return switch (type) {
+      _icggq6kf.LocationHit => 'LocationHit',
       _ion0otjm.Place => 'Place',
       _ii1d0owx.ReviewSummary => 'ReviewSummary',
       _ipwgf7iv.UserReview => 'UserReview',
@@ -132,6 +149,8 @@ class Protocol extends _isc.SerializationManager {
     }
 
     switch (data) {
+      case _icggq6kf.LocationHit():
+        return 'LocationHit';
       case _ion0otjm.Place():
         return 'Place';
       case _ii1d0owx.ReviewSummary():
@@ -147,6 +166,9 @@ class Protocol extends _isc.SerializationManager {
     var dataClassName = data['className'];
     if (dataClassName is! String) {
       return super.deserializeByClassName(data);
+    }
+    if (dataClassName == 'LocationHit') {
+      return deserialize<_icggq6kf.LocationHit>(data['data']);
     }
     if (dataClassName == 'Place') {
       return deserialize<_ion0otjm.Place>(data['data']);

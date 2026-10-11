@@ -13,14 +13,18 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/protocol.dart' as _isp;
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:trippick_server/src/generated/places/location_hit.dart'
+    as _i41cypjd;
 import 'package:trippick_server/src/generated/places/place.dart' as _i8c2er40;
 import 'package:trippick_server/src/generated/places/user_review.dart'
     as _ipn410b6;
 import 'places/collected_area.dart' as _iefsfaz0;
+import 'places/location_hit.dart' as _icggq6kf;
 import 'places/place.dart' as _ion0otjm;
 import 'places/review_summary.dart' as _ii1d0owx;
 import 'places/user_review.dart' as _ipwgf7iv;
 export 'places/collected_area.dart';
+export 'places/location_hit.dart';
 export 'places/place.dart';
 export 'places/review_summary.dart';
 export 'places/user_review.dart';
@@ -351,6 +355,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _iefsfaz0.CollectedArea) {
       return _iefsfaz0.CollectedArea.fromJson(data) as T;
     }
+    if (t == _icggq6kf.LocationHit) {
+      return _icggq6kf.LocationHit.fromJson(data) as T;
+    }
     if (t == _ion0otjm.Place) {
       return _ion0otjm.Place.fromJson(data) as T;
     }
@@ -363,6 +370,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _is.getType<_iefsfaz0.CollectedArea?>()) {
       return (data != null ? _iefsfaz0.CollectedArea.fromJson(data) : null)
           as T;
+    }
+    if (t == _is.getType<_icggq6kf.LocationHit?>()) {
+      return (data != null ? _icggq6kf.LocationHit.fromJson(data) : null) as T;
     }
     if (t == _is.getType<_ion0otjm.Place?>()) {
       return (data != null ? _ion0otjm.Place.fromJson(data) : null) as T;
@@ -402,6 +412,12 @@ class Protocol extends _is.DatabaseSerializationManager {
       return (data as List).map((e) => deserialize<_i8c2er40.Place>(e)).toList()
           as T;
     }
+    if (t == List<_i41cypjd.LocationHit>) {
+      return (data as List)
+              .map((e) => deserialize<_i41cypjd.LocationHit>(e))
+              .toList()
+          as T;
+    }
     if (t == List<_ipn410b6.UserReview>) {
       return (data as List)
               .map((e) => deserialize<_ipn410b6.UserReview>(e))
@@ -417,6 +433,7 @@ class Protocol extends _is.DatabaseSerializationManager {
   static String? getClassNameForType(Type type) {
     return switch (type) {
       _iefsfaz0.CollectedArea => 'CollectedArea',
+      _icggq6kf.LocationHit => 'LocationHit',
       _ion0otjm.Place => 'Place',
       _ii1d0owx.ReviewSummary => 'ReviewSummary',
       _ipwgf7iv.UserReview => 'UserReview',
@@ -436,6 +453,8 @@ class Protocol extends _is.DatabaseSerializationManager {
     switch (data) {
       case _iefsfaz0.CollectedArea():
         return 'CollectedArea';
+      case _icggq6kf.LocationHit():
+        return 'LocationHit';
       case _ion0otjm.Place():
         return 'Place';
       case _ii1d0owx.ReviewSummary():
@@ -458,6 +477,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (dataClassName == 'CollectedArea') {
       return deserialize<_iefsfaz0.CollectedArea>(data['data']);
+    }
+    if (dataClassName == 'LocationHit') {
+      return deserialize<_icggq6kf.LocationHit>(data['data']);
     }
     if (dataClassName == 'Place') {
       return deserialize<_ion0otjm.Place>(data['data']);

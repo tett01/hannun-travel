@@ -131,6 +131,19 @@ const _strings = <String, List<String>>{
   'retry': ['다시 시도', 'Retry'],
   'pick_location': ['어디 주변을 볼까요?', 'Where do you want to explore?'],
   'use_current': ['현재 위치', 'My current location'],
+  'loc_search_hint': [
+    '숙소, 주소, 지명으로 검색',
+    'Search a hotel, address or place',
+  ],
+  'loc_search_go': ['검색', 'Search'],
+  'loc_search_none': [
+    '검색 결과가 없어요. 다른 이름이나 주소로 찾아보세요.',
+    'No results. Try another name or address.',
+  ],
+  'loc_search_failed': [
+    '검색하지 못했어요. 잠시 후 다시 시도해 주세요.',
+    "Couldn't search right now. Please try again shortly.",
+  ],
   'loc_denied': [
     '위치 권한이 없어 기본 위치로 보여드려요',
     'Location is off — showing a featured area',

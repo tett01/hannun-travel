@@ -248,4 +248,42 @@ class OsmService {
     final city = a['city'] ?? a['town'] ?? a['village'] ?? a['state'];
     return [local, city].whereType<String>().toSet().join(', ');
   }
+
+  /// Places and addresses matching [query] worldwide (Nominatim search).
+  /// Nominatim allows no search-as-you-type, so call this on submit only.
+  Future<List<LocationHit>> search(String query, String language) async {
+    final res = await http
+        .get(
+          Uri.parse('https://nominatim.openstreetmap.org/search').replace(
+            queryParameters: {
+              'format': 'jsonv2',
+              'q': query,
+              'limit': '8',
+              'accept-language': language,
+            },
+          ),
+          headers: _headers,
+        )
+        .timeout(const Duration(seconds: 10));
+    if (res.statusCode != 200) return [];
+    return [
+      for (final d in (jsonDecode(utf8.decode(res.bodyBytes)) as List)
+          .cast<Map<String, dynamic>>())
+        _hit(d),
+    ];
+  }
+
+  static LocationHit _hit(Map<String, dynamic> d) {
+    final full = (d['display_name'] as String?) ?? '';
+    final name = (d['name'] as String?) ?? '';
+    return LocationHit(
+      name: name.isNotEmpty ? name : full.split(',').first,
+      // display_name repeats the name first; drop it from the address.
+      address: name.isNotEmpty && full.startsWith('$name, ')
+          ? full.substring(name.length + 2)
+          : full,
+      lat: double.parse(d['lat'] as String),
+      lng: double.parse(d['lon'] as String),
+    );
+  }
 }

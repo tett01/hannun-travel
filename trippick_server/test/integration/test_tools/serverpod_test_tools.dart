@@ -15,6 +15,8 @@ import 'dart:async' as _ida;
 import 'dart:io' as _idi;
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_test/serverpod_test.dart' as _ist;
+import 'package:trippick_server/src/generated/places/location_hit.dart'
+    as _i41cypjd;
 import 'package:trippick_server/src/generated/places/place.dart' as _i8c2er40;
 import 'package:trippick_server/src/generated/places/user_review.dart'
     as _ipn410b6;
@@ -249,6 +251,41 @@ class _PlaceEndpoint {
                   _localCallContext.arguments,
                 )
                 as _ida.Future<String>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<List<_i41cypjd.LocationHit>> searchLocation(
+    _ist.TestSessionBuilder sessionBuilder,
+    String query,
+    String language,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'place',
+            method: 'searchLocation',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'place',
+          methodName: 'searchLocation',
+          parameters: _ist.testObjectToJson({
+            'query': query,
+            'language': language,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<List<_i41cypjd.LocationHit>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

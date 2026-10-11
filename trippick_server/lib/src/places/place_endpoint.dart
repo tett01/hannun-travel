@@ -70,4 +70,40 @@ class PlaceEndpoint extends Endpoint {
       return '';
     }
   }
+
+  /// Places or addresses matching [query], for picking an area to explore
+  /// (e.g. "near my hotel"). Korea comes from Kakao, the rest of the world
+  /// from OpenStreetMap. A Korean query lists Kakao first; a query in other
+  /// letters lists OpenStreetMap first, since Kakao matches romanized names
+  /// poorly ("Gyeongbokgung" finds restaurants named after the palace).
+  Future<List<LocationHit>> searchLocation(
+    Session session,
+    String query,
+    String language,
+  ) async {
+    query = query.trim();
+    if (query.isEmpty) return [];
+    final kakao = kakaoServiceFor(session);
+    Future<List<LocationHit>> safe(Future<List<LocationHit>> f) =>
+        f.catchError((Object e) {
+          session.log('searchLocation failed: $e', level: LogLevel.warning);
+          return <LocationHit>[];
+        });
+    final results = await Future.wait([
+      safe(kakao?.search(query) ?? Future.value([])),
+      safe(OsmService().search(query, language)),
+    ]);
+    final korea = results[0];
+    final world = results[1];
+    if (!RegExp('[가-힣]').hasMatch(query)) {
+      return [...world, ...korea].take(15).toList();
+    }
+    // Kakao already covers Korea better, so skip OSM's Korean matches then.
+    return [
+      ...korea,
+      ...(korea.isEmpty
+          ? world
+          : world.where((h) => !isInKorea(h.lat, h.lng))),
+    ].take(15).toList();
+  }
 }

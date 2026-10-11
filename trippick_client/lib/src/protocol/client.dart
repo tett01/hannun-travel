@@ -13,6 +13,8 @@
 import 'dart:async' as _ida;
 import 'package:http/http.dart' as _i85jenna;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+import 'package:trippick_client/src/protocol/places/location_hit.dart'
+    as _iojwpf7q;
 import 'package:trippick_client/src/protocol/places/place.dart' as _itawvtbq;
 import 'package:trippick_client/src/protocol/places/user_review.dart'
     as _iqsxj9y5;
@@ -52,6 +54,23 @@ class EndpointPlace extends _isc.EndpointRef {
     {
       'lat': lat,
       'lng': lng,
+      'language': language,
+    },
+  );
+
+  /// Places or addresses matching [query], for picking an area to explore
+  /// (e.g. "near my hotel"). Korea comes from Kakao, the rest of the world
+  /// from OpenStreetMap. A Korean query lists Kakao first; a query in other
+  /// letters lists OpenStreetMap first, since Kakao matches romanized names
+  /// poorly ("Gyeongbokgung" finds restaurants named after the palace).
+  _ida.Future<List<_iojwpf7q.LocationHit>> searchLocation(
+    String query,
+    String language,
+  ) => caller.callServerEndpoint<List<_iojwpf7q.LocationHit>>(
+    'place',
+    'searchLocation',
+    {
+      'query': query,
       'language': language,
     },
   );
