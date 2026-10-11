@@ -228,6 +228,7 @@ const _subOrder = {
     'experience',
     'show',
     'themepark',
+    'indoor',
     'other',
   ],
 };

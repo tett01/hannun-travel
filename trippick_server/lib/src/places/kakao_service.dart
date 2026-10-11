@@ -103,6 +103,57 @@ class KakaoService {
     );
   }
 
+  /// Keywords for indoor fun (arcades, escape rooms, bowling, kids' play
+  /// cafés, indoor racing). TourAPI lists almost none of these.
+  static const _indoorKeywords = ['오락실', '방탈출', '볼링장', '키즈카페', '서킷'];
+
+  /// Indoor fun near ([lat], [lng]): the best few per keyword, keeping only
+  /// results Kakao files as leisure (e.g. "서킷" also finds car services).
+  Future<List<Place>> indoorFun(
+    double lat,
+    double lng, {
+    int perKeyword = 3,
+  }) async {
+    final params = {
+      'x': '$lng',
+      'y': '$lat',
+      'radius': '${DemoCity.radius}',
+      'sort': 'accuracy',
+      'size': '15',
+    };
+    final seen = <String>{};
+    final places = <Place>[];
+    for (final kw in _indoorKeywords) {
+      final docs = await _get('keyword', {...params, 'query': kw});
+      places.addAll(
+        docs
+            .where((d) => isIndoorFun((d['category_name'] as String?) ?? ''))
+            .where((d) => seen.add(d['id'] as String))
+            .take(perKeyword)
+            .map((d) => _place(d, 'activity')),
+      );
+    }
+    return places;
+  }
+
+  Place _place(Map<String, dynamic> d, String category) {
+    final phone = (d['phone'] as String?) ?? '';
+    final road = (d['road_address_name'] as String?) ?? '';
+    return Place(
+      sourceId: 'kakao:${d['id']}',
+      name: d['place_name'] as String,
+      category: category,
+      subcategory: Subcategory.fromKakao(
+        category,
+        (d['category_name'] as String?) ?? '',
+      ),
+      address: road.isNotEmpty ? road : (d['address_name'] as String?) ?? '',
+      lat: double.parse(d['y'] as String),
+      lng: double.parse(d['x'] as String),
+      tel: phone.isEmpty ? null : phone,
+    );
+  }
+
   Future<List<Place>> nearby(
     String category,
     int limit,
@@ -127,27 +178,8 @@ class KakaoService {
     final seen = <String>{};
     final places = <Place>[];
     for (final d in docs) {
-      final id = d['id'] as String;
-      if (!seen.add(id)) continue;
-      final phone = (d['phone'] as String?) ?? '';
-      final road = (d['road_address_name'] as String?) ?? '';
-      places.add(
-        Place(
-          sourceId: 'kakao:$id',
-          name: d['place_name'] as String,
-          category: category,
-          subcategory: Subcategory.fromKakao(
-            category,
-            (d['category_name'] as String?) ?? '',
-          ),
-          address: road.isNotEmpty
-              ? road
-              : (d['address_name'] as String?) ?? '',
-          lat: double.parse(d['y'] as String),
-          lng: double.parse(d['x'] as String),
-          tel: phone.isEmpty ? null : phone,
-        ),
-      );
+      if (!seen.add(d['id'] as String)) continue;
+      places.add(_place(d, category));
       if (places.length >= limit) break;
     }
     return places;

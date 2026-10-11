@@ -36,6 +36,7 @@ const _strings = <String, List<String>>{
   'sub_camping': ['캠핑', 'Camping'],
   'sub_show': ['공연·영화', 'Shows & cinema'],
   'sub_themepark': ['테마파크', 'Theme parks'],
+  'sub_indoor': ['실내 놀거리', 'Indoor fun'],
   'taste_healing': ['힐링', 'Relaxing'],
   'taste_activity': ['액티비티', 'Active'],
   'taste_food': ['맛집 탐방', 'Foodie'],

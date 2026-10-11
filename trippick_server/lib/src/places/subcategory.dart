@@ -4,7 +4,7 @@
 /// sight:    nature | history | culture | leisure | landmark | experience
 /// food:     korean | western | japanese | chinese | cafe | other
 /// activity: land | water | trail | camping | experience | show | themepark
-///           | other
+///           | indoor | other
 class Subcategory {
   /// From TourAPI cat2 / cat3 codes.
   static String fromTour(String category, String cat2, String cat3) {
@@ -51,6 +51,7 @@ class Subcategory {
           _ => 'other',
         };
       case 'activity':
+        if (isIndoorFun(categoryName)) return 'indoor';
         if (categoryName.contains('캠핑')) return 'camping';
         if (RegExp('서핑|요트|카약|다이빙|낚시').hasMatch(categoryName)) {
           return 'water';
@@ -99,6 +100,12 @@ class Subcategory {
           return 'themepark';
         }
         if (RegExp('cinema|theatre').hasMatch(tag('amenity'))) return 'show';
+        if (RegExp(
+          '^(bowling_alley|escape_game|amusement_arcade|trampoline_park|'
+          'indoor_play)\$',
+        ).hasMatch(tag('leisure'))) {
+          return 'indoor';
+        }
         if (tag('leisure') == 'marina') return 'water';
         if (tag('leisure') == 'park') return 'trail';
         if (tag('leisure').isNotEmpty) return 'land';
@@ -113,6 +120,13 @@ class Subcategory {
     }
   }
 }
+
+/// Indoor fun from a Kakao category_name: arcades, escape rooms, bowling,
+/// kids' play cafés, racing simulators ("교통,수송 > 자동차" is how Kakao files
+/// indoor racing venues such as 서킷스토리).
+bool isIndoorFun(String categoryName) => RegExp(
+  '여가시설|놀이시설|키즈카페|볼링|방탈출|오락실|트램폴린|^교통,수송 > 자동차\$',
+).hasMatch(categoryName);
 
 /// A wide area rather than one building (tourist zone, street, trail
 /// course): opening hours and closing days mean little there.

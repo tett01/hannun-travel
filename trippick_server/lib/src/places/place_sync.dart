@@ -133,10 +133,49 @@ Future<void> _collectArea(Session session, double lat, double lng) async {
     }
     places.addAll(found.where((p) => existing.add(p.sourceId)));
   }
+  if (kakao != null) {
+    places.addAll(await _indoorFun(session, kakao, lat, lng, existing));
+  }
 
   await Place.db.insert(session, places);
   await CollectedArea.db.insertRow(session, CollectedArea(lat: lat, lng: lng));
   session.log('[sync] collected ${places.length} new places near $lat,$lng');
+}
+
+/// Indoor fun from Kakao, added to every Korean area: TourAPI's leisure
+/// sports list misses arcades, escape rooms, kids' cafés and the like.
+Future<List<Place>> _indoorFun(
+  Session session,
+  KakaoService kakao,
+  double lat,
+  double lng,
+  Set<String> existing,
+) async {
+  try {
+    final found = await kakao.indoorFun(lat, lng);
+    return found.where((p) => existing.add(p.sourceId)).toList();
+  } catch (e) {
+    session.log('[sync] Kakao indoor failed: $e', level: LogLevel.warning);
+    return [];
+  }
+}
+
+/// Korean areas collected before indoor fun existed get it once per server
+/// run (already stored places are skipped, so repeating is harmless).
+final _indoorChecked = <int>{};
+
+Future<void> _addIndoorToOldAreas(Session session, KakaoService kakao) async {
+  final areas = (await CollectedArea.db.find(session))
+      .where((a) => isInKorea(a.lat, a.lng) && _indoorChecked.add(a.id!))
+      .toList();
+  if (areas.isEmpty) return;
+  final existing = {
+    for (final p in await Place.db.find(session)) p.sourceId,
+  };
+  for (final a in areas) {
+    final found = await _indoorFun(session, kakao, a.lat, a.lng, existing);
+    if (found.isNotEmpty) await Place.db.insert(session, found);
+  }
 }
 
 Future<void> _collectOverseas(
@@ -236,6 +275,7 @@ Future<bool> enrichPending(Session session) async {
 
   final kakao = kakaoServiceFor(session);
   if (kakao != null) {
+    await _addIndoorToOldAreas(session, kakao);
     final pending = await Place.db.find(
       session,
       where: (t) => t.subcategory.equals(null) & t.sourceId.like('kakao:%'),

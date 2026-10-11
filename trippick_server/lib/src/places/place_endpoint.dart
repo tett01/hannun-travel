@@ -101,9 +101,7 @@ class PlaceEndpoint extends Endpoint {
     // Kakao already covers Korea better, so skip OSM's Korean matches then.
     return [
       ...korea,
-      ...(korea.isEmpty
-          ? world
-          : world.where((h) => !isInKorea(h.lat, h.lng))),
+      ...(korea.isEmpty ? world : world.where((h) => !isInKorea(h.lat, h.lng))),
     ].take(15).toList();
   }
 }

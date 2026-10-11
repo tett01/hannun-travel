@@ -31,6 +31,7 @@ class OsmService {
       r'[tourism~"^(theme_park|zoo|aquarium)$"][name]',
       r'[leisure~"^(water_park|park|sports_centre|ice_rink|marina)$"][name][wikidata]',
       r'[amenity~"^(cinema|theatre)$"][name]',
+      r'[leisure~"^(bowling_alley|escape_game|amusement_arcade|trampoline_park|indoor_play)$"][name]',
     ],
   };
 
@@ -267,8 +268,9 @@ class OsmService {
         .timeout(const Duration(seconds: 10));
     if (res.statusCode != 200) return [];
     return [
-      for (final d in (jsonDecode(utf8.decode(res.bodyBytes)) as List)
-          .cast<Map<String, dynamic>>())
+      for (final d
+          in (jsonDecode(utf8.decode(res.bodyBytes)) as List)
+              .cast<Map<String, dynamic>>())
         _hit(d),
     ];
   }
