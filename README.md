@@ -13,7 +13,8 @@ Built for the Serverpod *Build Something Real* hackathon.
 ## Features
 
 - **Nearby, anywhere**: uses your location, a featured area, or any hotel, address or place you search for (e.g. around the hotel you booked), and lists places within 6 km, nearest first. The first visit to a new area collects its places on the fly.
-- **Korea and the rest of the world**: Korea uses the Korea Tourism Organization's official TourAPI (with photos and visitor info) plus Kakao Local. Everywhere else uses OpenStreetMap and Wikipedia.
+- **Korea and the rest of the world**: Korea uses the Korea Tourism Organization's official TourAPI (with photos and visitor info) plus Kakao Local, which also adds indoor fun (arcades, bowling, escape rooms, kids' cafés, indoor racing) that TourAPI barely lists. Everywhere else uses OpenStreetMap and Wikipedia.
+- **Filter by kind**: each category has a second row of filters, e.g. History or Museums & culture for sights, Korean or Cafés for food, Water sports or Indoor fun for activities.
 - **Taste-based ranking**: pick Relaxing, Active, Foodie or Photo spots, and places tagged for that taste come first.
 - **AI that cannot invent places**: places only come from TourAPI, Kakao or OpenStreetMap. The AI only summarizes the text it is given, is told to write "No info" rather than guess, and its tags are checked against a fixed list.
 - **Reviews**: star rating and text; the server recalculates the average and regenerates the review summary.
@@ -28,7 +29,7 @@ Built for the Serverpod *Build Something Real* hackathon.
 | `PlaceEndpoint.regionName(lat, lng, language)` | Neighborhood name for the header (Kakao in Korea, OpenStreetMap Nominatim elsewhere) |
 | `ReviewEndpoint.add / list` | Stores reviews, updates ratings and regenerates the AI review summary |
 | Models (`.spy.yaml`) | `Place`, `ReviewSummary`, `UserReview`, `CollectedArea` with Postgres tables and migrations, plus `LocationHit` for search results |
-| Background sync | On start and after each new area, a background session fills official details, Wikipedia text and AI summaries, skipping finished work |
+| Background sync | On start and after each new area, a background session fills official details, Wikipedia text, place kinds and AI summaries, skipping finished work (areas collected earlier also get newly added kinds, such as indoor fun) |
 | Passwords | API keys live in `config/passwords.yaml` locally and in Serverpod Cloud passwords, never in code |
 
 The Flutter app talks to the server through the generated client (`client.place.nearby(...)`, `client.review.add(...)`).
@@ -72,7 +73,7 @@ cd trippick_server && dart test
 ## Data sources and attribution
 
 - Tourism information: Korea Tourism Organization (한국관광공사) TourAPI, KOGL Type 1
-- Places in Korea: Kakao Local API
+- Places in Korea (including indoor fun): Kakao Local API
 - Places outside Korea and map tiles: © OpenStreetMap contributors (ODbL)
 - Descriptions and photos outside Korea: Wikipedia / Wikimedia Commons (CC BY-SA)
 - AI summaries: generated with models served by Groq
