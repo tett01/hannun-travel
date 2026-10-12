@@ -18,6 +18,8 @@ import 'package:serverpod_test/serverpod_test.dart' as _ist;
 import 'package:trippick_server/src/generated/places/location_hit.dart'
     as _i41cypjd;
 import 'package:trippick_server/src/generated/places/place.dart' as _i8c2er40;
+import 'package:trippick_server/src/generated/places/route_plan.dart'
+    as _i37s88i3;
 import 'package:trippick_server/src/generated/places/user_review.dart'
     as _ipn410b6;
 import 'package:trippick_server/src/generated/protocol.dart';
@@ -156,6 +158,8 @@ class TestEndpoints {
   late final _PlaceEndpoint place;
 
   late final _ReviewEndpoint review;
+
+  late final _RouteEndpoint route;
 }
 
 class _InternalTestEndpoints extends TestEndpoints
@@ -170,6 +174,10 @@ class _InternalTestEndpoints extends TestEndpoints
       serializationManager,
     );
     review = _ReviewEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    route = _RouteEndpoint(
       endpoints,
       serializationManager,
     );
@@ -367,6 +375,60 @@ class _ReviewEndpoint {
                   _localCallContext.arguments,
                 )
                 as _ida.Future<_i8c2er40.Place>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
+class _RouteEndpoint {
+  _RouteEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<List<_i37s88i3.RoutePlan>> plan(
+    _ist.TestSessionBuilder sessionBuilder,
+    List<int> placeIds,
+    String mode,
+    double startLat,
+    double startLng,
+    int startMin,
+    int weekday,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'route',
+            method: 'plan',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'route',
+          methodName: 'plan',
+          parameters: _ist.testObjectToJson({
+            'placeIds': placeIds,
+            'mode': mode,
+            'startLat': startLat,
+            'startLng': startLng,
+            'startMin': startMin,
+            'weekday': weekday,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<List<_i37s88i3.RoutePlan>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

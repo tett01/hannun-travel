@@ -13,6 +13,7 @@
 import 'package:serverpod/serverpod.dart' as _is;
 import '../places/place_endpoint.dart' as _iyw3o9dp;
 import '../places/review_endpoint.dart' as _iptyoesq;
+import '../places/route_endpoint.dart' as _idzkey6u;
 
 class Endpoints extends _is.EndpointDispatch {
   @override
@@ -28,6 +29,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'review',
+          null,
+        ),
+      'route': _idzkey6u.RouteEndpoint()
+        ..initialize(
+          server,
+          'route',
           null,
         ),
     };
@@ -173,6 +180,60 @@ class Endpoints extends _is.EndpointDispatch {
                 params['author'],
                 params['rating'],
                 params['text'],
+              ),
+        ),
+      },
+    );
+    connectors['route'] = _is.EndpointConnector(
+      name: 'route',
+      endpoint: endpoints['route']!,
+      methodConnectors: {
+        'plan': _is.MethodConnector(
+          name: 'plan',
+          params: {
+            'placeIds': _is.ParameterDescription(
+              name: 'placeIds',
+              type: _is.getType<List<int>>(),
+              nullable: false,
+            ),
+            'mode': _is.ParameterDescription(
+              name: 'mode',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'startLat': _is.ParameterDescription(
+              name: 'startLat',
+              type: _is.getType<double>(),
+              nullable: false,
+            ),
+            'startLng': _is.ParameterDescription(
+              name: 'startLng',
+              type: _is.getType<double>(),
+              nullable: false,
+            ),
+            'startMin': _is.ParameterDescription(
+              name: 'startMin',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'weekday': _is.ParameterDescription(
+              name: 'weekday',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['route'] as _idzkey6u.RouteEndpoint).plan(
+                session,
+                params['placeIds'],
+                params['mode'],
+                params['startLat'],
+                params['startLng'],
+                params['startMin'],
+                params['weekday'],
               ),
         ),
       },

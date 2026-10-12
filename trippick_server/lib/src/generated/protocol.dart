@@ -16,17 +16,23 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:trippick_server/src/generated/places/location_hit.dart'
     as _i41cypjd;
 import 'package:trippick_server/src/generated/places/place.dart' as _i8c2er40;
+import 'package:trippick_server/src/generated/places/route_plan.dart'
+    as _i37s88i3;
 import 'package:trippick_server/src/generated/places/user_review.dart'
     as _ipn410b6;
 import 'places/collected_area.dart' as _iefsfaz0;
 import 'places/location_hit.dart' as _icggq6kf;
 import 'places/place.dart' as _ion0otjm;
 import 'places/review_summary.dart' as _ii1d0owx;
+import 'places/route_plan.dart' as _ijecgs00;
+import 'places/route_stop.dart' as _iciv6ehk;
 import 'places/user_review.dart' as _ipwgf7iv;
 export 'places/collected_area.dart';
 export 'places/location_hit.dart';
 export 'places/place.dart';
 export 'places/review_summary.dart';
+export 'places/route_plan.dart';
+export 'places/route_stop.dart';
 export 'places/user_review.dart';
 
 class Protocol extends _is.DatabaseSerializationManager {
@@ -364,6 +370,12 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _ii1d0owx.ReviewSummary) {
       return _ii1d0owx.ReviewSummary.fromJson(data) as T;
     }
+    if (t == _ijecgs00.RoutePlan) {
+      return _ijecgs00.RoutePlan.fromJson(data) as T;
+    }
+    if (t == _iciv6ehk.RouteStop) {
+      return _iciv6ehk.RouteStop.fromJson(data) as T;
+    }
     if (t == _ipwgf7iv.UserReview) {
       return _ipwgf7iv.UserReview.fromJson(data) as T;
     }
@@ -380,6 +392,12 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _is.getType<_ii1d0owx.ReviewSummary?>()) {
       return (data != null ? _ii1d0owx.ReviewSummary.fromJson(data) : null)
           as T;
+    }
+    if (t == _is.getType<_ijecgs00.RoutePlan?>()) {
+      return (data != null ? _ijecgs00.RoutePlan.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_iciv6ehk.RouteStop?>()) {
+      return (data != null ? _iciv6ehk.RouteStop.fromJson(data) : null) as T;
     }
     if (t == _is.getType<_ipwgf7iv.UserReview?>()) {
       return (data != null ? _ipwgf7iv.UserReview.fromJson(data) : null) as T;
@@ -408,6 +426,12 @@ class Protocol extends _is.DatabaseSerializationManager {
               : null)
           as T;
     }
+    if (t == List<_iciv6ehk.RouteStop>) {
+      return (data as List)
+              .map((e) => deserialize<_iciv6ehk.RouteStop>(e))
+              .toList()
+          as T;
+    }
     if (t == List<_i8c2er40.Place>) {
       return (data as List).map((e) => deserialize<_i8c2er40.Place>(e)).toList()
           as T;
@@ -424,6 +448,15 @@ class Protocol extends _is.DatabaseSerializationManager {
               .toList()
           as T;
     }
+    if (t == List<_i37s88i3.RoutePlan>) {
+      return (data as List)
+              .map((e) => deserialize<_i37s88i3.RoutePlan>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<int>) {
+      return (data as List).map((e) => deserialize<int>(e)).toList() as T;
+    }
     try {
       return _isp.Protocol().deserialize<T>(data, t);
     } on _is.DeserializationTypeNotFoundException catch (_) {}
@@ -436,6 +469,8 @@ class Protocol extends _is.DatabaseSerializationManager {
       _icggq6kf.LocationHit => 'LocationHit',
       _ion0otjm.Place => 'Place',
       _ii1d0owx.ReviewSummary => 'ReviewSummary',
+      _ijecgs00.RoutePlan => 'RoutePlan',
+      _iciv6ehk.RouteStop => 'RouteStop',
       _ipwgf7iv.UserReview => 'UserReview',
       _ => null,
     };
@@ -459,6 +494,10 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'Place';
       case _ii1d0owx.ReviewSummary():
         return 'ReviewSummary';
+      case _ijecgs00.RoutePlan():
+        return 'RoutePlan';
+      case _iciv6ehk.RouteStop():
+        return 'RouteStop';
       case _ipwgf7iv.UserReview():
         return 'UserReview';
     }
@@ -486,6 +525,12 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (dataClassName == 'ReviewSummary') {
       return deserialize<_ii1d0owx.ReviewSummary>(data['data']);
+    }
+    if (dataClassName == 'RoutePlan') {
+      return deserialize<_ijecgs00.RoutePlan>(data['data']);
+    }
+    if (dataClassName == 'RouteStop') {
+      return deserialize<_iciv6ehk.RouteStop>(data['data']);
     }
     if (dataClassName == 'UserReview') {
       return deserialize<_ipwgf7iv.UserReview>(data['data']);

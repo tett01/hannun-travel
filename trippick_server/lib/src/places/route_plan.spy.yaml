@@ -1,0 +1,20 @@
+### A visiting order for the places a traveler picked.
+class: RoutePlan
+fields:
+  ### fast (least travel) | hours (fits opening hours) | meal (food at meal times)
+  kind: String
+  stops: List<RouteStop>
+  travelMin: int
+  distanceM: int
+  ### When the last stop is left, in minutes after midnight.
+  endMin: int
+  ### Stops that are likely closed on arrival.
+  issues: int
+  ### Sum of known admission fees in won (Korea only).
+  feeTotal: int
+  ### Stops whose admission fee is unknown.
+  feeUnknown: int
+  ### Estimated food spend per person in won (Korea only, 0 elsewhere).
+  mealEstimate: int
+  ### true when travel times come from Mapbox road data, false when estimated.
+  measured: bool

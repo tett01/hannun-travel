@@ -16,6 +16,8 @@ import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'package:trippick_client/src/protocol/places/location_hit.dart'
     as _iojwpf7q;
 import 'package:trippick_client/src/protocol/places/place.dart' as _itawvtbq;
+import 'package:trippick_client/src/protocol/places/route_plan.dart'
+    as _i0nbmmlc;
 import 'package:trippick_client/src/protocol/places/user_review.dart'
     as _iqsxj9y5;
 import 'protocol.dart' as _il2as5qe;
@@ -110,6 +112,39 @@ class EndpointReview extends _isc.EndpointRef {
   );
 }
 
+/// Accessed from the app as `client.route`.
+/// {@category Endpoint}
+class EndpointRoute extends _isc.EndpointRef {
+  EndpointRoute(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'route';
+
+  /// Different visiting orders for [placeIds], starting at ([startLat],
+  /// [startLng]) at [startMin] (minutes after midnight) on [weekday]
+  /// (1 = Monday). [mode] is driving | walking | transit.
+  /// Travel times come from Mapbox when a token is set, else are estimated.
+  _ida.Future<List<_i0nbmmlc.RoutePlan>> plan(
+    List<int> placeIds,
+    String mode,
+    double startLat,
+    double startLng,
+    int startMin,
+    int weekday,
+  ) => caller.callServerEndpoint<List<_i0nbmmlc.RoutePlan>>(
+    'route',
+    'plan',
+    {
+      'placeIds': placeIds,
+      'mode': mode,
+      'startLat': startLat,
+      'startLng': startLng,
+      'startMin': startMin,
+      'weekday': weekday,
+    },
+  );
+}
+
 class Client extends _isc.ServerpodClientShared {
   Client(
     String host, {
@@ -139,16 +174,20 @@ class Client extends _isc.ServerpodClientShared {
        ) {
     place = EndpointPlace(this);
     review = EndpointReview(this);
+    route = EndpointRoute(this);
   }
 
   late final EndpointPlace place;
 
   late final EndpointReview review;
 
+  late final EndpointRoute route;
+
   @override
   Map<String, _isc.EndpointRef> get endpointRefLookup => {
     'place': place,
     'review': review,
+    'route': route,
   };
 
   @override

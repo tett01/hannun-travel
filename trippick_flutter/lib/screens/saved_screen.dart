@@ -4,6 +4,7 @@ import '../l10n.dart';
 import '../models/place_view.dart';
 import '../theme.dart';
 import '../widgets/place_widgets.dart';
+import 'route_screen.dart';
 
 class SavedScreen extends StatelessWidget {
   const SavedScreen({super.key, required this.places});
@@ -22,8 +23,24 @@ class SavedScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                child: Text(t('tab_saved'), style: AppText.title),
+                padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
+                child: Row(
+                  children: [
+                    Text(t('tab_saved'), style: AppText.title),
+                    const Spacer(),
+                    // 저장한 곳이 2곳 이상이면 방문 순서를 짜 볼 수 있음
+                    if (list.length >= 2)
+                      TextButton.icon(
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => RouteScreen(places: list),
+                          ),
+                        ),
+                        icon: const Icon(Icons.route_outlined, size: 18),
+                        label: Text(t('route_make')),
+                      ),
+                  ],
+                ),
               ),
               Expanded(
                 child: list.isEmpty

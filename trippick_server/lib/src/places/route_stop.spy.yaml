@@ -1,0 +1,15 @@
+### One stop of a planned route. Times are minutes after midnight.
+class: RouteStop
+fields:
+  placeId: int
+  ### Travel from the previous stop (or the start point) to here.
+  travelMin: int
+  distanceM: int
+  arriveMin: int
+  ### Waiting for opening time or the end of a break.
+  waitMin: int
+  leaveMin: int
+  ### closed_day | closed_hours | null when the place should be open.
+  issue: String?
+  ### Admission fee in won from the official info (0 = free, null = unknown).
+  fee: int?
