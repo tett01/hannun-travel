@@ -206,26 +206,47 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
           _iconLine(Icons.place_outlined, p.address),
           if (p.tel != null) _iconLine(Icons.call_outlined, p.tel!),
           const SizedBox(height: 10),
-          OutlinedButton.icon(
-            onPressed: () => launchUrl(
-              Uri.parse(
-                inKorea(p.lat, p.lng)
-                    ? 'https://map.kakao.com/link/map/'
-                          '${Uri.encodeComponent(p.name)},${p.lat},${p.lng}'
-                    : 'https://www.google.com/maps/search/?api=1'
-                          '&query=${p.lat},${p.lng}',
+          // 지도 보기 옆에 바로 제보 버튼 (현장에서 다르면 바로 누를 수 있게)
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => launchUrl(
+                  Uri.parse(
+                    inKorea(p.lat, p.lng)
+                        ? 'https://map.kakao.com/link/map/'
+                              '${Uri.encodeComponent(p.name)},${p.lat},${p.lng}'
+                        : 'https://www.google.com/maps/search/?api=1'
+                              '&query=${p.lat},${p.lng}',
+                  ),
+                  mode: LaunchMode.externalApplication,
+                ),
+                icon: const Icon(Icons.map_outlined, size: 18),
+                label: Text(
+                  t(inKorea(p.lat, p.lng) ? 'open_map' : 'open_google'),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.ink,
+                  side: const BorderSide(color: AppColors.line),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
               ),
-              mode: LaunchMode.externalApplication,
-            ),
-            icon: const Icon(Icons.map_outlined, size: 18),
-            label: Text(t(inKorea(p.lat, p.lng) ? 'open_map' : 'open_google')),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.ink,
-              side: const BorderSide(color: AppColors.line),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+              OutlinedButton.icon(
+                onPressed: _report,
+                icon: const Icon(Icons.flag_outlined, size: 18),
+                label: Text(t('report_button')),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.bad,
+                  side: const BorderSide(color: AppColors.line),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
           const SizedBox(height: 20),
           if (p.reviewSummary != null) ...[
@@ -256,18 +277,6 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                 child: Text(t('check_before'), style: AppText.caption),
               ),
           ],
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: _report,
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.sub,
-                padding: EdgeInsets.zero,
-              ),
-              icon: const Icon(Icons.flag_outlined, size: 18),
-              label: Text(t('report_button')),
-            ),
-          ),
           // TourAPI text is Korean (hidden in English mode); Wikipedia
           // text is usually English, so it is shown in both modes.
           if (p.overview != null &&
