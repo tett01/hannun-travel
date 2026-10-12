@@ -353,8 +353,8 @@ const _strings = <String, List<String>>{
   'trips_title': ['내 여행', 'My trips'],
   'trips_empty': ['아직 저장한 여행이 없어요', 'No saved trips yet'],
   'trips_empty_sub': [
-    '루트를 만든 뒤 "내 여행에 저장"을 눌러 보세요',
-    'Make a route and tap "Save to my trips"',
+    '루트를 만들면 여기에 자동으로 쌓여요',
+    'Routes you make pile up here automatically',
   ],
   'trips_failed': ['여행을 불러오지 못했어요', "Couldn't load your trips"],
   'trips_count': ['여행 {n}번 · ', '{n} trips · '],

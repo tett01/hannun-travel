@@ -167,6 +167,8 @@ class _TripCard extends StatelessWidget {
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           tilePadding: const EdgeInsets.fromLTRB(16, 4, 4, 4),
+          expandedCrossAxisAlignment: CrossAxisAlignment.start,
+          expandedAlignment: Alignment.centerLeft,
           childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
           title: Text(trip.title, style: AppText.name),
           subtitle: Text(meta.join(' · '), style: AppText.small),

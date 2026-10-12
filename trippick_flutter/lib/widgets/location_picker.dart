@@ -311,6 +311,8 @@ void showLocationResult(BuildContext context, LocateResult result) {
     SnackBar(
       content: Text(t(key)),
       duration: const Duration(seconds: 6),
+      // 버튼이 있어도 6초 뒤 닫힘 (아래 버튼과 다른 알림을 가리지 않게)
+      persist: false,
       action: result == LocateResult.blocked
           ? SnackBarAction(
               label: t('loc_how'),
