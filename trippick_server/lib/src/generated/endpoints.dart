@@ -385,6 +385,30 @@ class Endpoints extends _is.EndpointDispatch {
                 params['trip'],
               ),
         ),
+        'update': _is.MethodConnector(
+          name: 'update',
+          params: {
+            'deviceId': _is.ParameterDescription(
+              name: 'deviceId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'trip': _is.ParameterDescription(
+              name: 'trip',
+              type: _is.getType<_idvxes01.Trip>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['trip'] as _ihm8szw3.TripEndpoint).update(
+                session,
+                params['deviceId'],
+                params['trip'],
+              ),
+        ),
         'list': _is.MethodConnector(
           name: 'list',
           params: {

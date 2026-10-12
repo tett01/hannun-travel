@@ -233,6 +233,20 @@ class EndpointTrip extends _isc.EndpointRef {
     },
   );
 
+  /// Replaces the title, area and days of trip [Trip.id] if it belongs to
+  /// [deviceId] (e.g. after picking another route or renaming it).
+  _ida.Future<_igng1c0u.Trip> update(
+    String deviceId,
+    _igng1c0u.Trip trip,
+  ) => caller.callServerEndpoint<_igng1c0u.Trip>(
+    'trip',
+    'update',
+    {
+      'deviceId': deviceId,
+      'trip': trip,
+    },
+  );
+
   /// Trips saved on [deviceId], newest first.
   _ida.Future<List<_igng1c0u.Trip>> list(String deviceId) =>
       caller.callServerEndpoint<List<_igng1c0u.Trip>>(

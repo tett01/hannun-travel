@@ -49,6 +49,15 @@ Future<Trip> saveTrip(Trip trip) async {
   return saved;
 }
 
+/// 같은 여행을 고쳐 저장 (다른 루트를 고르거나 이름을 바꿀 때).
+Future<Trip> updateTrip(Trip trip) async {
+  final saved = await client.trip.update(deviceId, trip);
+  tripsStore.value = [
+    for (final t in tripsStore.value) t.id == saved.id ? saved : t,
+  ];
+  return saved;
+}
+
 Future<void> deleteTrip(Trip trip) async {
   await client.trip.delete(deviceId, trip.id!);
   tripsStore.value = [

@@ -14,5 +14,6 @@ route:
   - plan:
 trip:
   - save:
+  - update:
   - list:
   - delete:

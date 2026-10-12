@@ -162,6 +162,7 @@ class _RouteScreenState extends State<RouteScreen> {
         _viewDay = days.first;
         _loading = false;
       });
+      _autoSave();
     } catch (e) {
       debugPrint('route.plan failed: $e');
       if (mounted) {
@@ -178,17 +179,77 @@ class _RouteScreenState extends State<RouteScreen> {
     _plans = null;
   });
 
-  /// 고른 루트를 "부산 여행"처럼 이름 붙여 내 여행에 저장.
-  Future<void> _save() async {
-    final plans = _plans!;
+  /// 이 화면에서 만든 루트가 저장된 여행. 루트를 다시 만들거나 다른 후보를
+  /// 고르면 새로 쌓지 않고 이 여행을 고칩니다.
+  Trip? _trip;
+  bool _saveFailed = false;
+
+  String get _area {
     final loc = locationStore.value;
-    final area = lang.value == Lang.en ? loc.labelEn : loc.labelKo;
+    return lang.value == Lang.en ? loc.labelEn : loc.labelKo;
+  }
+
+  /// 지금 고른 후보들로 여행 내용을 만듦.
+  List<TripDay> _tripDays() => [
+    for (final MapEntry(key: d, value: list) in _plans!.entries)
+      if (list.isNotEmpty)
+        () {
+          final plan = list[(_selected[d] ?? 0).clamp(0, list.length - 1)];
+          final date = _date(d);
+          return TripDay(
+            day: d,
+            date:
+                '${date.year}-${date.month.toString().padLeft(2, '0')}-'
+                '${date.day.toString().padLeft(2, '0')}',
+            mode: _mode,
+            kind: plan.kind,
+            placeIds: [for (final s in plan.stops) s.placeId],
+            stops: [
+              for (final s in plan.stops)
+                '${_fmt(s.arriveMin + s.waitMin)} ${_place(s.placeId).displayName}',
+            ],
+            travelMin: plan.travelMin,
+            cost: plan.feeTotal + plan.mealEstimate,
+          );
+        }(),
+  ];
+
+  /// 루트를 만들면 내 여행에 자동으로 쌓음 (같은 화면에서는 한 여행만 고침).
+  Future<void> _autoSave() async {
+    final days = _tripDays();
+    if (days.isEmpty) return;
+    try {
+      final trip = _trip == null
+          ? await saveTrip(
+              Trip(
+                deviceId: deviceId,
+                title: widget.title ?? t('trip_default_title', n: _area),
+                area: _area,
+                days: days,
+                createdAt: DateTime.now(),
+              ),
+            )
+          : await updateTrip(_trip!.copyWith(days: days, area: _area));
+      if (mounted) {
+        setState(() {
+          _trip = trip;
+          _saveFailed = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('auto save failed: $e');
+      if (mounted) setState(() => _saveFailed = true);
+    }
+  }
+
+  /// "부산 가족 여행"처럼 이름 바꾸기.
+  Future<void> _rename() async {
+    final trip = _trip;
+    if (trip == null) return;
     final title = await showDialog<String>(
       context: context,
       builder: (context) {
-        final ctrl = TextEditingController(
-          text: widget.title ?? t('trip_default_title', n: area),
-        );
+        final ctrl = TextEditingController(text: trip.title);
         return AlertDialog(
           title: Text(t('trip_save_title')),
           content: TextField(
@@ -211,52 +272,56 @@ class _RouteScreenState extends State<RouteScreen> {
       },
     );
     if (title == null || title.isEmpty || !mounted) return;
-    final days = <TripDay>[
-      for (final MapEntry(key: d, value: list) in plans.entries)
-        if (list.isNotEmpty)
-          () {
-            final plan = list[(_selected[d] ?? 0).clamp(0, list.length - 1)];
-            final date = _date(d);
-            return TripDay(
-              day: d,
-              date:
-                  '${date.year}-${date.month.toString().padLeft(2, '0')}-'
-                  '${date.day.toString().padLeft(2, '0')}',
-              mode: _mode,
-              kind: plan.kind,
-              placeIds: [for (final s in plan.stops) s.placeId],
-              stops: [
-                for (final s in plan.stops)
-                  '${_fmt(s.arriveMin + s.waitMin)} ${_place(s.placeId).displayName}',
-              ],
-              travelMin: plan.travelMin,
-              cost: plan.feeTotal + plan.mealEstimate,
-            );
-          }(),
-    ];
     try {
-      await saveTrip(
-        Trip(
-          deviceId: deviceId,
-          title: title,
-          area: area,
-          days: days,
-          createdAt: DateTime.now(),
-        ),
-      );
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(t('trip_saved', n: title))));
-      }
+      final saved = await updateTrip(trip.copyWith(title: title));
+      if (mounted) setState(() => _trip = saved);
     } catch (e) {
-      debugPrint('saveTrip failed: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(t('trip_save_failed'))));
-      }
+      debugPrint('rename failed: $e');
+      if (mounted) setState(() => _saveFailed = true);
     }
+  }
+
+  /// 결과 맨 위: 내 여행에 저장됐는지와 이름 바꾸기.
+  Widget _savedBar() {
+    final trip = _trip;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.fromLTRB(12, 6, 4, 6),
+      decoration: BoxDecoration(
+        color: _saveFailed
+            ? AppColors.bad.withValues(alpha: 0.06)
+            : AppColors.good.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            _saveFailed
+                ? Icons.error_outline
+                : trip == null
+                ? Icons.sync
+                : Icons.check_circle_outline,
+            size: 18,
+            color: _saveFailed ? AppColors.bad : AppColors.good,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              _saveFailed
+                  ? t('trip_save_failed')
+                  : trip == null
+                  ? t('trip_saving')
+                  : t('trip_auto_saved', n: trip.title),
+              style: AppText.body.copyWith(fontSize: 13, color: AppColors.ink),
+            ),
+          ),
+          if (_saveFailed)
+            TextButton(onPressed: _autoSave, child: Text(t('retry')))
+          else if (trip != null)
+            TextButton(onPressed: _rename, child: Text(t('trip_rename'))),
+        ],
+      ),
+    );
   }
 
   @override
@@ -442,6 +507,7 @@ class _RouteScreenState extends State<RouteScreen> {
     final selected = (_selected[day] ?? 0).clamp(0, plans.length - 1);
     final plan = plans[selected];
     return [
+      _savedBar(),
       if (days.length > 1) ...[
         SegmentedButton<int>(
           segments: [
@@ -467,7 +533,10 @@ class _RouteScreenState extends State<RouteScreen> {
               label: Text(t('route_${plans[i].kind}')),
               selected: i == selected,
               showCheckmark: false,
-              onSelected: (_) => setState(() => _selected[day] = i),
+              onSelected: (_) {
+                setState(() => _selected[day] = i);
+                _autoSave();
+              },
             ),
         ],
       ),
@@ -482,12 +551,6 @@ class _RouteScreenState extends State<RouteScreen> {
         label: Text(t('route_navigate')),
       ),
       const SizedBox(height: 8),
-      FilledButton.icon(
-        onPressed: _save,
-        style: FilledButton.styleFrom(backgroundColor: AppColors.ink),
-        icon: const Icon(Icons.luggage_outlined, size: 18),
-        label: Text(t(days.length > 1 ? 'trip_save_all' : 'trip_save')),
-      ),
       const SizedBox(height: 10),
       Text(
         t(plan.measured ? 'route_measured' : 'route_estimated'),

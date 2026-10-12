@@ -29,6 +29,31 @@ class TripEndpoint extends Endpoint {
     );
   }
 
+  /// Replaces the title, area and days of trip [Trip.id] if it belongs to
+  /// [deviceId] (e.g. after picking another route or renaming it).
+  Future<Trip> update(Session session, String deviceId, Trip trip) async {
+    _checkDevice(deviceId);
+    final title = trip.title.trim();
+    if (trip.id == null || title.isEmpty || trip.days.isEmpty) {
+      throw ArgumentError('A trip needs an id, a title and at least one day');
+    }
+    final current = await Trip.db.findFirstRow(
+      session,
+      where: (t) => t.id.equals(trip.id) & t.deviceId.equals(deviceId),
+    );
+    if (current == null) {
+      throw ArgumentError.value(trip.id, 'id', 'No such trip');
+    }
+    return Trip.db.updateRow(
+      session,
+      current.copyWith(
+        title: title.substring(0, title.length.clamp(0, 60)),
+        area: trip.area,
+        days: trip.days,
+      ),
+    );
+  }
+
   /// Trips saved on [deviceId], newest first.
   Future<List<Trip>> list(Session session, String deviceId) {
     _checkDevice(deviceId);
