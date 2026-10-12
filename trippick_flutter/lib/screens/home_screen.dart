@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/place_repository.dart';
 import '../data/traits.dart';
 import '../l10n.dart';
 import '../models/place_view.dart';
@@ -96,6 +97,45 @@ class _HomeScreenState extends State<HomeScreen> {
           autoPlan: true,
         ),
       ),
+    );
+  }
+
+  /// 특산물·기념품 살 곳 (없으면 아무것도 안 보임).
+  Widget _souvenirs() {
+    return ValueListenableBuilder(
+      valueListenable: souvenirsStore,
+      builder: (context, shops, _) {
+        if (shops.isEmpty) return const SizedBox.shrink();
+        final osm = shops.every((s) => s.source == 'osm');
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 22, 20, 2),
+              child: Text(t('souvenir_title'), style: AppText.section),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+              child: Text(
+                t(osm ? 'souvenir_sub_osm' : 'souvenir_sub'),
+                style: AppText.small,
+              ),
+            ),
+            SizedBox(
+              height: 104,
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                scrollDirection: Axis.horizontal,
+                itemCount: shops.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 10),
+                itemBuilder: (_, i) => ShopCard(shop: shops[i]),
+              ),
+            ),
+            const SizedBox(height: 22),
+            const Divider(height: 8, thickness: 8, color: AppColors.soft),
+          ],
+        );
+      },
     );
   }
 
@@ -256,6 +296,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SliverToBoxAdapter(
               child: Divider(height: 8, thickness: 8, color: AppColors.soft),
             ),
+            SliverToBoxAdapter(child: _souvenirs()),
           ],
           SliverToBoxAdapter(
             child: Padding(

@@ -20,6 +20,8 @@ import 'package:trippick_client/src/protocol/places/place_report.dart'
     as _ia8ye04g;
 import 'package:trippick_client/src/protocol/places/route_plan.dart'
     as _i0nbmmlc;
+import 'package:trippick_client/src/protocol/places/shop_hit.dart' as _ifeirymj;
+import 'package:trippick_client/src/protocol/places/trip.dart' as _igng1c0u;
 import 'package:trippick_client/src/protocol/places/user_review.dart'
     as _iqsxj9y5;
 import 'protocol.dart' as _il2as5qe;
@@ -55,6 +57,21 @@ class EndpointPlace extends _isc.EndpointRef {
   ) => caller.callServerEndpoint<List<_iojwpf7q.LocationHit>>(
     'place',
     'stations',
+    {
+      'lat': lat,
+      'lng': lng,
+    },
+  );
+
+  /// Where to buy local specialties and souvenirs near ([lat], [lng]):
+  /// markets, craft shops and specialty stores first, nearest first within
+  /// each kind. Korea: TourAPI shopping info + Kakao; elsewhere OpenStreetMap.
+  _ida.Future<List<_ifeirymj.ShopHit>> souvenirs(
+    double lat,
+    double lng,
+  ) => caller.callServerEndpoint<List<_ifeirymj.ShopHit>>(
+    'place',
+    'souvenirs',
     {
       'lat': lat,
       'lng': lng,
@@ -194,6 +211,50 @@ class EndpointRoute extends _isc.EndpointRef {
   );
 }
 
+/// Accessed from the app as `client.trip`. Trips belong to the random id
+/// the app keeps on the device, since there is no sign-in yet.
+/// {@category Endpoint}
+class EndpointTrip extends _isc.EndpointRef {
+  EndpointTrip(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'trip';
+
+  /// Saves [trip] for [deviceId] and returns it with its id.
+  _ida.Future<_igng1c0u.Trip> save(
+    String deviceId,
+    _igng1c0u.Trip trip,
+  ) => caller.callServerEndpoint<_igng1c0u.Trip>(
+    'trip',
+    'save',
+    {
+      'deviceId': deviceId,
+      'trip': trip,
+    },
+  );
+
+  /// Trips saved on [deviceId], newest first.
+  _ida.Future<List<_igng1c0u.Trip>> list(String deviceId) =>
+      caller.callServerEndpoint<List<_igng1c0u.Trip>>(
+        'trip',
+        'list',
+        {'deviceId': deviceId},
+      );
+
+  /// Deletes trip [id] if it belongs to [deviceId].
+  _ida.Future<bool> delete(
+    String deviceId,
+    int id,
+  ) => caller.callServerEndpoint<bool>(
+    'trip',
+    'delete',
+    {
+      'deviceId': deviceId,
+      'id': id,
+    },
+  );
+}
+
 class Client extends _isc.ServerpodClientShared {
   Client(
     String host, {
@@ -225,6 +286,7 @@ class Client extends _isc.ServerpodClientShared {
     report = EndpointReport(this);
     review = EndpointReview(this);
     route = EndpointRoute(this);
+    trip = EndpointTrip(this);
   }
 
   late final EndpointPlace place;
@@ -235,12 +297,15 @@ class Client extends _isc.ServerpodClientShared {
 
   late final EndpointRoute route;
 
+  late final EndpointTrip trip;
+
   @override
   Map<String, _isc.EndpointRef> get endpointRefLookup => {
     'place': place,
     'report': report,
     'review': review,
     'route': route,
+    'trip': trip,
   };
 
   @override

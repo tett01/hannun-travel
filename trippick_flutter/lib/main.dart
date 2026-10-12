@@ -6,17 +6,20 @@ import 'package:google_fonts/google_fonts.dart';
 import 'client.dart';
 import 'data/location.dart';
 import 'data/place_repository.dart';
+import 'data/trips.dart';
 import 'models/place_view.dart';
 import 'l10n.dart';
 import 'screens/home_screen.dart';
 import 'screens/map_screen.dart';
 import 'screens/saved_screen.dart';
+import 'screens/trips_screen.dart';
 import 'theme.dart';
 import 'widgets/location_picker.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeClient();
+  await initDeviceData();
   // 한글 글꼴을 먼저 받아 둬서 첫 화면에 글자가 네모로 깨지지 않게 함
   await GoogleFonts.pendingFonts([
     for (final w in [
@@ -133,7 +136,7 @@ class _AppShellState extends State<AppShell> {
                 HomeScreen(places: places),
                 MapScreen(places: places),
                 SavedScreen(places: places),
-                Center(child: Text(t('coming_soon'), style: AppText.body)),
+                const TripsScreen(),
               ],
             ),
       bottomNavigationBar: DecoratedBox(
@@ -167,8 +170,8 @@ class _AppShellState extends State<AppShell> {
               label: t('tab_saved'),
             ),
             BottomNavigationBarItem(
-              icon: const Icon(Icons.person_outline),
-              activeIcon: const Icon(Icons.person),
+              icon: const Icon(Icons.luggage_outlined),
+              activeIcon: const Icon(Icons.luggage),
               label: t('tab_my'),
             ),
           ],

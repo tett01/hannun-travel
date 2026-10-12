@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:trippick_client/trippick_client.dart';
 
 import '../client.dart';
@@ -10,6 +11,8 @@ Future<void> loadPlaces() async {
   final loc = locationStore.value;
   final places = await client.place.nearby(loc.lat, loc.lng);
   placesStore.value = [for (final p in places) toView(p)];
+  souvenirsStore.value = [];
+  loadSouvenirs();
   // 역 근처 표시용. 실패해도 장소 목록에는 영향 없음.
   client.place
       .stations(loc.lat, loc.lng)
@@ -18,6 +21,20 @@ Future<void> loadPlaces() async {
         stationsStore.value = [];
         return <LocationHit>[];
       });
+}
+
+/// 지금 지역의 특산물·기념품 살 곳. 실패하면 빈 목록.
+final souvenirsStore = ValueNotifier<List<ShopHit>>([]);
+
+Future<void> loadSouvenirs() async {
+  final loc = locationStore.value;
+  try {
+    final shops = await client.place.souvenirs(loc.lat, loc.lng);
+    // 그사이 다른 지역으로 옮겼으면 버림
+    if (locationStore.value == loc) souvenirsStore.value = shops;
+  } catch (e) {
+    debugPrint('loadSouvenirs failed: $e');
+  }
 }
 
 Future<List<PlaceReport>> loadReports(PlaceView place) =>

@@ -71,6 +71,50 @@ class KakaoService {
     ];
   }
 
+  /// Specialty, souvenir and traditional market shops near ([lat], [lng]).
+  Future<List<ShopHit>> souvenirShops(double lat, double lng) async {
+    const keywords = {'특산물': 'specialty', '기념품': 'souvenir', '전통시장': 'market'};
+    final seen = <String>{};
+    final hits = <ShopHit>[];
+    for (final MapEntry(key: kw, value: kind) in keywords.entries) {
+      final docs = await _get('keyword', {
+        'query': kw,
+        'x': '$lng',
+        'y': '$lat',
+        'radius': '${DemoCity.radius}',
+        'sort': 'accuracy',
+        'size': '6',
+      });
+      for (final d in docs) {
+        final category = (d['category_name'] as String?) ?? '';
+        // Keyword search also finds restaurants named after a market.
+        if (!category.startsWith('가정,생활') && !category.startsWith('쇼핑')) {
+          continue;
+        }
+        if (!seen.add(d['id'] as String)) continue;
+        final road = (d['road_address_name'] as String?) ?? '';
+        hits.add(
+          ShopHit(
+            name: d['place_name'] as String,
+            address: road.isNotEmpty
+                ? road
+                : (d['address_name'] as String?) ?? '',
+            lat: double.parse(d['y'] as String),
+            lng: double.parse(d['x'] as String),
+            kind: kind,
+            // "시장" alone says nothing; the card shows the address then.
+            items: switch (category.split(' > ').last) {
+              '시장' || '전통시장' || '쇼핑' => null,
+              final last => last,
+            },
+            source: 'kakao',
+          ),
+        );
+      }
+    }
+    return hits;
+  }
+
   /// Subway stations within the search radius (Kakao category SW8).
   Future<List<LocationHit>> stations(double lat, double lng) async {
     final hits = <LocationHit>[];

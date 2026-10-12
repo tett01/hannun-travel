@@ -11,10 +11,12 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:trippick_server/src/generated/places/trip.dart' as _idvxes01;
 import '../places/place_endpoint.dart' as _iyw3o9dp;
 import '../places/report_endpoint.dart' as _iddiujvh;
 import '../places/review_endpoint.dart' as _iptyoesq;
 import '../places/route_endpoint.dart' as _idzkey6u;
+import '../places/trip_endpoint.dart' as _ihm8szw3;
 
 class Endpoints extends _is.EndpointDispatch {
   @override
@@ -42,6 +44,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'route',
+          null,
+        ),
+      'trip': _ihm8szw3.TripEndpoint()
+        ..initialize(
+          server,
+          'trip',
           null,
         ),
     };
@@ -93,6 +101,31 @@ class Endpoints extends _is.EndpointDispatch {
                 Map<String, dynamic> params,
               ) async =>
                   (endpoints['place'] as _iyw3o9dp.PlaceEndpoint).stations(
+                    session,
+                    params['lat'],
+                    params['lng'],
+                  ),
+        ),
+        'souvenirs': _is.MethodConnector(
+          name: 'souvenirs',
+          params: {
+            'lat': _is.ParameterDescription(
+              name: 'lat',
+              type: _is.getType<double>(),
+              nullable: false,
+            ),
+            'lng': _is.ParameterDescription(
+              name: 'lng',
+              type: _is.getType<double>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['place'] as _iyw3o9dp.PlaceEndpoint).souvenirs(
                     session,
                     params['lat'],
                     params['lng'],
@@ -320,6 +353,78 @@ class Endpoints extends _is.EndpointDispatch {
                 params['startLng'],
                 params['startMin'],
                 params['weekday'],
+              ),
+        ),
+      },
+    );
+    connectors['trip'] = _is.EndpointConnector(
+      name: 'trip',
+      endpoint: endpoints['trip']!,
+      methodConnectors: {
+        'save': _is.MethodConnector(
+          name: 'save',
+          params: {
+            'deviceId': _is.ParameterDescription(
+              name: 'deviceId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'trip': _is.ParameterDescription(
+              name: 'trip',
+              type: _is.getType<_idvxes01.Trip>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['trip'] as _ihm8szw3.TripEndpoint).save(
+                session,
+                params['deviceId'],
+                params['trip'],
+              ),
+        ),
+        'list': _is.MethodConnector(
+          name: 'list',
+          params: {
+            'deviceId': _is.ParameterDescription(
+              name: 'deviceId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['trip'] as _ihm8szw3.TripEndpoint).list(
+                session,
+                params['deviceId'],
+              ),
+        ),
+        'delete': _is.MethodConnector(
+          name: 'delete',
+          params: {
+            'deviceId': _is.ParameterDescription(
+              name: 'deviceId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'id': _is.ParameterDescription(
+              name: 'id',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['trip'] as _ihm8szw3.TripEndpoint).delete(
+                session,
+                params['deviceId'],
+                params['id'],
               ),
         ),
       },

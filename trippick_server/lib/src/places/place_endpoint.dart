@@ -7,6 +7,7 @@ import 'demo_city.dart';
 import 'osm_service.dart';
 import 'place_sync.dart';
 import 'summary_service.dart';
+import 'tour_service.dart';
 
 /// Accessed from the app as `client.place`.
 class PlaceEndpoint extends Endpoint {
@@ -76,6 +77,85 @@ class PlaceEndpoint extends Endpoint {
   }
 
   static final _stations = <String, List<LocationHit>>{};
+
+  /// Where to buy local specialties and souvenirs near ([lat], [lng]):
+  /// markets, craft shops and specialty stores first, nearest first within
+  /// each kind. Korea: TourAPI shopping info + Kakao; elsewhere OpenStreetMap.
+  Future<List<ShopHit>> souvenirs(
+    Session session,
+    double lat,
+    double lng,
+  ) async {
+    final key = '${lat.toStringAsFixed(2)},${lng.toStringAsFixed(2)}';
+    final cached = _souvenirs[key];
+    if (cached != null) return cached;
+    final found = <ShopHit>[];
+    Future<void> add(Future<List<ShopHit>> f) async {
+      try {
+        found.addAll(await f.timeout(const Duration(seconds: 20)));
+      } catch (e) {
+        session.log('souvenirs failed: $e', level: LogLevel.warning);
+      }
+    }
+
+    if (isInKorea(lat, lng)) {
+      final tourKey = session.passwords['tourApiKey'] ?? '';
+      await Future.wait([
+        if (tourKey.isNotEmpty) add(TourService(tourKey).shops(lat, lng)),
+        if (kakaoServiceFor(session) case final kakao?)
+          add(kakao.souvenirShops(lat, lng)),
+      ]);
+    } else {
+      await add(OsmService().souvenirShops(lat, lng));
+    }
+
+    // Kinds take turns so markets don't crowd out craft and specialty
+    // shops; within a kind, places with official sale items come first.
+    const order = ['market', 'specialty', 'craft', 'souvenir', 'shop', 'mall'];
+    // General shops and malls only when they sell something to take home.
+    final gifty = RegExp(
+      r'공예|기념|특산|전통|인삼|홍삼|한복|건어물|수산|기프트|선물|차|김|도자|한지|'
+      r'농산|식품|과자|빵|술|souvenir|gift|craft',
+      caseSensitive: false,
+    );
+    found.removeWhere(
+      (h) =>
+          (h.kind == 'shop' || h.kind == 'mall') &&
+          !gifty.hasMatch(h.items ?? ''),
+    );
+    final seen = <String>{};
+    final groups = [
+      for (final kind in order)
+        found
+            .where(
+              (h) => h.kind == kind && seen.add(h.name.replaceAll(' ', '')),
+            )
+            .toList()
+          ..sort((a, b) {
+            final s =
+                (b.items != null && b.source == 'tour' ? 1 : 0) -
+                (a.items != null && a.source == 'tour' ? 1 : 0);
+            if (s != 0) return s;
+            return distanceMeters(lat, lng, a.lat, a.lng) -
+                distanceMeters(lat, lng, b.lat, b.lng);
+          }),
+    ];
+    final result = <ShopHit>[];
+    for (var i = 0; groups.any((g) => i < g.length); i++) {
+      for (final g in groups) {
+        if (i < g.length) result.add(g[i]);
+      }
+    }
+    final top = result.take(20).toList();
+    // Only cache a full answer, so a slow API is retried next time.
+    if (top.isNotEmpty) {
+      if (_souvenirs.length > 200) _souvenirs.clear();
+      _souvenirs[key] = top;
+    }
+    return top;
+  }
+
+  static final _souvenirs = <String, List<ShopHit>>{};
 
   /// Neighborhood name such as "해운대구 우동" ('' if unknown).
   Future<String> regionName(

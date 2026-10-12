@@ -1,6 +1,7 @@
 place:
   - nearby:
   - stations:
+  - souvenirs:
   - regionName:
   - searchLocation:
 report:
@@ -11,3 +12,7 @@ review:
   - add:
 route:
   - plan:
+trip:
+  - save:
+  - list:
+  - delete:

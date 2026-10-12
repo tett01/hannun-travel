@@ -22,6 +22,9 @@ import 'package:trippick_server/src/generated/places/place_report.dart'
     as _iskcn2mu;
 import 'package:trippick_server/src/generated/places/route_plan.dart'
     as _i37s88i3;
+import 'package:trippick_server/src/generated/places/shop_hit.dart'
+    as _iwxk0bej;
+import 'package:trippick_server/src/generated/places/trip.dart' as _idvxes01;
 import 'package:trippick_server/src/generated/places/user_review.dart'
     as _ipn410b6;
 import 'package:trippick_server/src/generated/protocol.dart';
@@ -164,6 +167,8 @@ class TestEndpoints {
   late final _ReviewEndpoint review;
 
   late final _RouteEndpoint route;
+
+  late final _TripEndpoint trip;
 }
 
 class _InternalTestEndpoints extends TestEndpoints
@@ -186,6 +191,10 @@ class _InternalTestEndpoints extends TestEndpoints
       serializationManager,
     );
     route = _RouteEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    trip = _TripEndpoint(
       endpoints,
       serializationManager,
     );
@@ -265,6 +274,41 @@ class _PlaceEndpoint {
                   _localCallContext.arguments,
                 )
                 as _ida.Future<List<_i41cypjd.LocationHit>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<List<_iwxk0bej.ShopHit>> souvenirs(
+    _ist.TestSessionBuilder sessionBuilder,
+    double lat,
+    double lng,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'place',
+            method: 'souvenirs',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'place',
+          methodName: 'souvenirs',
+          parameters: _ist.testObjectToJson({
+            'lat': lat,
+            'lng': lng,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<List<_iwxk0bej.ShopHit>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -551,6 +595,118 @@ class _RouteEndpoint {
                   _localCallContext.arguments,
                 )
                 as _ida.Future<List<_i37s88i3.RoutePlan>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
+class _TripEndpoint {
+  _TripEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_idvxes01.Trip> save(
+    _ist.TestSessionBuilder sessionBuilder,
+    String deviceId,
+    _idvxes01.Trip trip,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'trip',
+            method: 'save',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'trip',
+          methodName: 'save',
+          parameters: _ist.testObjectToJson({
+            'deviceId': deviceId,
+            'trip': trip,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_idvxes01.Trip>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<List<_idvxes01.Trip>> list(
+    _ist.TestSessionBuilder sessionBuilder,
+    String deviceId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'trip',
+            method: 'list',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'trip',
+          methodName: 'list',
+          parameters: _ist.testObjectToJson({'deviceId': deviceId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<List<_idvxes01.Trip>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<bool> delete(
+    _ist.TestSessionBuilder sessionBuilder,
+    String deviceId,
+    int id,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'trip',
+            method: 'delete',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'trip',
+          methodName: 'delete',
+          parameters: _ist.testObjectToJson({
+            'deviceId': deviceId,
+            'id': id,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<bool>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

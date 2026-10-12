@@ -1,0 +1,17 @@
+### One day of a saved trip: the chosen route as it was planned.
+class: TripDay
+fields:
+  ### 0 = first day.
+  day: int
+  ### yyyy-mm-dd
+  date: String
+  ### driving | walking | transit
+  mode: String
+  ### fast | hours | meal
+  kind: String
+  placeIds: List<int>
+  ### "10:00 해운대 관광특구" per stop, so the trip reads without the places.
+  stops: List<String>
+  travelMin: int
+  ### Estimated cost per person in won (admission + meals).
+  cost: int

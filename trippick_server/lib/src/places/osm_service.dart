@@ -57,6 +57,43 @@ class OsmService {
     throw Exception('Overpass failed: $lastError');
   }
 
+  /// Souvenir, gift and craft shops and marketplaces nearby.
+  Future<List<ShopHit>> souvenirShops(double lat, double lng) async {
+    final r = DemoCity.radius;
+    final elements = await _query(
+      '[out:json][timeout:20];'
+      '(nwr["shop"~"^(gift|souvenir|craft|art|farm|deli)\$"](around:$r,$lat,$lng);'
+      'nwr["amenity"="marketplace"](around:$r,$lat,$lng););out center 40;',
+    );
+    final hits = <ShopHit>[];
+    for (final e in elements) {
+      final t = (e['tags'] as Map?)?.cast<String, dynamic>() ?? const {};
+      final name = t['name'];
+      final lat2 = (e['lat'] ?? (e['center'] as Map?)?['lat']) as num?;
+      final lng2 = (e['lon'] ?? (e['center'] as Map?)?['lon']) as num?;
+      if (name == null || lat2 == null || lng2 == null) continue;
+      final shop = '${t['shop'] ?? ''}';
+      hits.add(
+        ShopHit(
+          name: '$name',
+          address: _address(t),
+          lat: lat2.toDouble(),
+          lng: lng2.toDouble(),
+          kind: t['amenity'] == 'marketplace'
+              ? 'market'
+              : shop == 'craft' || shop == 'art'
+              ? 'craft'
+              : shop == 'farm' || shop == 'deli'
+              ? 'specialty'
+              : 'souvenir',
+          hours: t['opening_hours'] == null ? null : '${t['opening_hours']}',
+          source: 'osm',
+        ),
+      );
+    }
+    return hits;
+  }
+
   /// Rail, subway and tram stations within the search radius.
   Future<List<LocationHit>> stations(double lat, double lng) async {
     final r = DemoCity.radius;

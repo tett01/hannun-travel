@@ -1,0 +1,14 @@
+### A trip a traveler saved from the route planner, e.g. "부산 여행".
+### Kept per device (no sign-in yet).
+class: Trip
+table: trip
+fields:
+  deviceId: String
+  title: String
+  ### Area shown when it was planned, e.g. "부산 해운대".
+  area: String
+  days: List<TripDay>
+  createdAt: DateTime, default=now
+indexes:
+  trip_device_idx:
+    fields: deviceId

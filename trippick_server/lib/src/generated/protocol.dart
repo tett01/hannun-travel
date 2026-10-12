@@ -20,6 +20,9 @@ import 'package:trippick_server/src/generated/places/place_report.dart'
     as _iskcn2mu;
 import 'package:trippick_server/src/generated/places/route_plan.dart'
     as _i37s88i3;
+import 'package:trippick_server/src/generated/places/shop_hit.dart'
+    as _iwxk0bej;
+import 'package:trippick_server/src/generated/places/trip.dart' as _idvxes01;
 import 'package:trippick_server/src/generated/places/user_review.dart'
     as _ipn410b6;
 import 'places/collected_area.dart' as _iefsfaz0;
@@ -29,6 +32,9 @@ import 'places/place_report.dart' as _i85w78xd;
 import 'places/review_summary.dart' as _ii1d0owx;
 import 'places/route_plan.dart' as _ijecgs00;
 import 'places/route_stop.dart' as _iciv6ehk;
+import 'places/shop_hit.dart' as _i4y0djlf;
+import 'places/trip.dart' as _i3d89mdh;
+import 'places/trip_day.dart' as _ivaukw60;
 import 'places/user_review.dart' as _ipwgf7iv;
 export 'places/collected_area.dart';
 export 'places/location_hit.dart';
@@ -37,6 +43,9 @@ export 'places/place_report.dart';
 export 'places/review_summary.dart';
 export 'places/route_plan.dart';
 export 'places/route_stop.dart';
+export 'places/shop_hit.dart';
+export 'places/trip.dart';
+export 'places/trip_day.dart';
 export 'places/user_review.dart';
 
 class Protocol extends _is.DatabaseSerializationManager {
@@ -327,6 +336,69 @@ class Protocol extends _is.DatabaseSerializationManager {
       managed: true,
     ),
     _isp.TableDefinition(
+      name: 'trip',
+      dartName: 'Trip',
+      schema: 'public',
+      module: 'trippick',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'deviceId',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'title',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'area',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'days',
+          columnType: _isp.ColumnType.json,
+          isNullable: false,
+          dartType: 'List<protocol:TripDay>',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+          columnDefault: 'now',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'trip_device_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'deviceId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
       name: 'user_review',
       dartName: 'UserReview',
       schema: 'public',
@@ -440,6 +512,15 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _iciv6ehk.RouteStop) {
       return _iciv6ehk.RouteStop.fromJson(data) as T;
     }
+    if (t == _i4y0djlf.ShopHit) {
+      return _i4y0djlf.ShopHit.fromJson(data) as T;
+    }
+    if (t == _i3d89mdh.Trip) {
+      return _i3d89mdh.Trip.fromJson(data) as T;
+    }
+    if (t == _ivaukw60.TripDay) {
+      return _ivaukw60.TripDay.fromJson(data) as T;
+    }
     if (t == _ipwgf7iv.UserReview) {
       return _ipwgf7iv.UserReview.fromJson(data) as T;
     }
@@ -465,6 +546,15 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (t == _is.getType<_iciv6ehk.RouteStop?>()) {
       return (data != null ? _iciv6ehk.RouteStop.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_i4y0djlf.ShopHit?>()) {
+      return (data != null ? _i4y0djlf.ShopHit.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_i3d89mdh.Trip?>()) {
+      return (data != null ? _i3d89mdh.Trip.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_ivaukw60.TripDay?>()) {
+      return (data != null ? _ivaukw60.TripDay.fromJson(data) : null) as T;
     }
     if (t == _is.getType<_ipwgf7iv.UserReview?>()) {
       return (data != null ? _ipwgf7iv.UserReview.fromJson(data) : null) as T;
@@ -499,6 +589,15 @@ class Protocol extends _is.DatabaseSerializationManager {
               .toList()
           as T;
     }
+    if (t == List<_ivaukw60.TripDay>) {
+      return (data as List)
+              .map((e) => deserialize<_ivaukw60.TripDay>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<int>) {
+      return (data as List).map((e) => deserialize<int>(e)).toList() as T;
+    }
     if (t == List<_i8c2er40.Place>) {
       return (data as List).map((e) => deserialize<_i8c2er40.Place>(e)).toList()
           as T;
@@ -506,6 +605,12 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == List<_i41cypjd.LocationHit>) {
       return (data as List)
               .map((e) => deserialize<_i41cypjd.LocationHit>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_iwxk0bej.ShopHit>) {
+      return (data as List)
+              .map((e) => deserialize<_iwxk0bej.ShopHit>(e))
               .toList()
           as T;
     }
@@ -530,6 +635,10 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == List<int>) {
       return (data as List).map((e) => deserialize<int>(e)).toList() as T;
     }
+    if (t == List<_idvxes01.Trip>) {
+      return (data as List).map((e) => deserialize<_idvxes01.Trip>(e)).toList()
+          as T;
+    }
     try {
       return _isp.Protocol().deserialize<T>(data, t);
     } on _is.DeserializationTypeNotFoundException catch (_) {}
@@ -545,6 +654,9 @@ class Protocol extends _is.DatabaseSerializationManager {
       _ii1d0owx.ReviewSummary => 'ReviewSummary',
       _ijecgs00.RoutePlan => 'RoutePlan',
       _iciv6ehk.RouteStop => 'RouteStop',
+      _i4y0djlf.ShopHit => 'ShopHit',
+      _i3d89mdh.Trip => 'Trip',
+      _ivaukw60.TripDay => 'TripDay',
       _ipwgf7iv.UserReview => 'UserReview',
       _ => null,
     };
@@ -574,6 +686,12 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'RoutePlan';
       case _iciv6ehk.RouteStop():
         return 'RouteStop';
+      case _i4y0djlf.ShopHit():
+        return 'ShopHit';
+      case _i3d89mdh.Trip():
+        return 'Trip';
+      case _ivaukw60.TripDay():
+        return 'TripDay';
       case _ipwgf7iv.UserReview():
         return 'UserReview';
     }
@@ -611,6 +729,15 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (dataClassName == 'RouteStop') {
       return deserialize<_iciv6ehk.RouteStop>(data['data']);
     }
+    if (dataClassName == 'ShopHit') {
+      return deserialize<_i4y0djlf.ShopHit>(data['data']);
+    }
+    if (dataClassName == 'Trip') {
+      return deserialize<_i3d89mdh.Trip>(data['data']);
+    }
+    if (dataClassName == 'TripDay') {
+      return deserialize<_ivaukw60.TripDay>(data['data']);
+    }
     if (dataClassName == 'UserReview') {
       return deserialize<_ipwgf7iv.UserReview>(data['data']);
     }
@@ -636,6 +763,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         return _ion0otjm.Place.t;
       case _i85w78xd.PlaceReport:
         return _i85w78xd.PlaceReport.t;
+      case _i3d89mdh.Trip:
+        return _i3d89mdh.Trip.t;
       case _ipwgf7iv.UserReview:
         return _ipwgf7iv.UserReview.t;
     }

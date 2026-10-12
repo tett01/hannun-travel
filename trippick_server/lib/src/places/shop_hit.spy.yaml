@@ -1,0 +1,16 @@
+### A place to buy local specialties or souvenirs (markets, craft shops).
+### Comes from TourAPI shopping info, Kakao or OpenStreetMap, never from AI.
+class: ShopHit
+fields:
+  name: String
+  address: String
+  lat: double
+  lng: double
+  ### market | craft | souvenir | specialty | mall | shop
+  kind: String
+  ### What it sells, from the official info (e.g. "건어물 / 수산물").
+  items: String?
+  hours: String?
+  imageUrl: String?
+  ### tour | kakao | osm
+  source: String

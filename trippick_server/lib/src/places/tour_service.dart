@@ -151,6 +151,56 @@ class TourService {
     ];
   }
 
+  /// Shopping places (content type 38) near ([lat], [lng]) with what they
+  /// sell and their hours, nearest first.
+  Future<List<ShopHit>> shops(double lat, double lng, {int limit = 15}) async {
+    final items = await _get('locationBasedList2', {
+      'mapX': '$lng',
+      'mapY': '$lat',
+      'radius': '${DemoCity.radius}',
+      'contentTypeId': '38',
+      'arrange': 'E',
+      'numOfRows': '30',
+      'pageNo': '1',
+    });
+    return Future.wait([
+      for (final i in items.take(limit))
+        () async {
+          var sale = '', hours = '';
+          try {
+            final intro = await _get('detailIntro2', {
+              'contentId': '${i['contentid']}',
+              'contentTypeId': '38',
+            });
+            if (intro.isNotEmpty) {
+              sale = clean(intro.first['saleitem']);
+              hours = clean(intro.first['opentime']);
+            }
+          } catch (_) {}
+          final cat3 = '${i['cat3'] ?? ''}';
+          final image = clean(i['firstimage']);
+          return ShopHit(
+            name: clean(i['title']),
+            address: clean('${i['addr1'] ?? ''} ${i['addr2'] ?? ''}'),
+            lat: double.parse('${i['mapy']}'),
+            lng: double.parse('${i['mapx']}'),
+            kind: switch (cat3) {
+              'A04010200' => 'market', // 5일장·상설시장
+              'A04010700' => 'craft', // 공예·공방
+              'A04010300' || 'A04010400' => 'mall', // 백화점·면세점
+              _ => 'shop',
+            },
+            items: sale.isEmpty ? null : sale,
+            hours: hours.isEmpty ? null : hours,
+            imageUrl: image.isEmpty
+                ? null
+                : image.replaceFirst('http://', 'https://'),
+            source: 'tour',
+          );
+        }(),
+    ]);
+  }
+
   /// Fills overview, practical facts, kind and photos for a TourAPI place.
   Future<Place> withDetails(Place place) async {
     final contentId = place.sourceId.substring('tour:'.length);

@@ -1,4 +1,10 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:trippick_client/trippick_client.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../data/location.dart';
 
 import '../data/traits.dart';
 import '../l10n.dart';
@@ -422,4 +428,98 @@ class TraitTags extends StatelessWidget {
       },
     );
   }
+}
+
+/// 특산물·기념품 살 곳 카드 (시장·공방·특산물 가게). 누르면 지도 앱으로.
+class ShopCard extends StatelessWidget {
+  const ShopCard({super.key, required this.shop});
+
+  final ShopHit shop;
+
+  @override
+  Widget build(BuildContext context) {
+    final korea = inKorea(shop.lat, shop.lng);
+    final loc = locationStore.value;
+    final meters = distanceBetween(loc.lat, loc.lng, shop.lat, shop.lng);
+    return GestureDetector(
+      onTap: () => launchUrl(
+        Uri.parse(
+          korea
+              ? 'https://map.kakao.com/link/map/'
+                    '${Uri.encodeComponent(shop.name)},${shop.lat},${shop.lng}'
+              : 'https://www.google.com/maps/search/?api=1'
+                    '&query=${Uri.encodeComponent(shop.name)}'
+                    '&query_place_id=&center=${shop.lat},${shop.lng}',
+        ),
+        mode: LaunchMode.externalApplication,
+      ),
+      child: Container(
+        width: 210,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          border: Border.all(color: AppColors.line),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(_shopIcon(shop.kind), size: 16, color: AppColors.accent),
+                const SizedBox(width: 4),
+                Text(
+                  t('shop_${shop.kind}'),
+                  style: AppText.caption.copyWith(
+                    color: AppColors.accent,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  meters < 1000
+                      ? '${meters}m'
+                      : '${(meters / 1000).toStringAsFixed(1)}km',
+                  style: AppText.caption,
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              shop.name,
+              style: AppText.name.copyWith(fontSize: 15),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              shop.items ?? shop.address,
+              style: AppText.small,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static IconData _shopIcon(String kind) => switch (kind) {
+    'market' => Icons.storefront_outlined,
+    'craft' => Icons.palette_outlined,
+    'specialty' => Icons.redeem_outlined,
+    'souvenir' => Icons.card_giftcard_outlined,
+    _ => Icons.shopping_bag_outlined,
+  };
+}
+
+/// 두 지점 사이 거리(m).
+int distanceBetween(double lat1, double lng1, double lat2, double lng2) {
+  const r = 6371000.0;
+  double rad(double d) => d * pi / 180;
+  final dLat = rad(lat2 - lat1);
+  final dLng = rad(lng2 - lng1);
+  final a =
+      sin(dLat / 2) * sin(dLat / 2) +
+      cos(rad(lat1)) * cos(rad(lat2)) * sin(dLng / 2) * sin(dLng / 2);
+  return (2 * r * asin(sqrt(a))).round();
 }
