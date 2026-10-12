@@ -105,28 +105,71 @@ Future<void> showLocationPicker(BuildContext context) {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
               child: Text(t('featured_areas'), style: AppText.caption),
             ),
-            for (final preset in [...presetLocations, ...abroadLocations]) ...[
-              if (identical(preset, abroadLocations.first))
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                  child: Text(t('abroad'), style: AppText.caption),
-                ),
-              ListTile(
-                dense: true,
-                leading: Icon(
-                  inKorea(preset.lat, preset.lng)
-                      ? Icons.place_outlined
-                      : Icons.public,
-                  color: AppColors.faint,
-                ),
-                title: Text(locationLabel(preset), style: AppText.name),
-                onTap: () {
-                  Navigator.of(sheetContext).pop();
-                  locationStore.value = preset;
-                },
-              ),
-            ],
+            // Chips instead of one row per area: a long list ran past the
+            // bottom of short phone screens and hid the last city.
+            _PresetChips(presets: presetLocations, sheetContext: sheetContext),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+              child: Text(t('abroad'), style: AppText.caption),
+            ),
+            _PresetChips(presets: abroadLocations, sheetContext: sheetContext),
           ],
+        ),
+      ),
+    ),
+  );
+}
+
+/// Featured areas as wrapping chips; the area shown now is filled in.
+class _PresetChips extends StatelessWidget {
+  const _PresetChips({required this.presets, required this.sheetContext});
+
+  final List<AppLocation> presets;
+  final BuildContext sheetContext;
+
+  @override
+  Widget build(BuildContext context) {
+    final current = locationStore.value;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final preset in presets)
+            _chip(
+              preset,
+              on:
+                  !current.isCurrent &&
+                  preset.lat == current.lat &&
+                  preset.lng == current.lng,
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _chip(AppLocation preset, {required bool on}) => InkWell(
+    borderRadius: BorderRadius.circular(18),
+    onTap: () {
+      Navigator.of(sheetContext).pop();
+      locationStore.value = preset;
+    },
+    child: Container(
+      height: 36,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: on ? AppColors.ink : Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: on ? AppColors.ink : AppColors.line),
+      ),
+      child: Text(
+        locationLabel(preset),
+        style: AppText.body.copyWith(
+          fontSize: 14,
+          color: on ? Colors.white : AppColors.ink,
+          fontWeight: FontWeight.w500,
         ),
       ),
     ),
