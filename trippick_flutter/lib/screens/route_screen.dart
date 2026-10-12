@@ -11,9 +11,20 @@ import '../widgets/place_widgets.dart';
 
 /// 저장한 장소들로 방문 순서를 여러 개 짜서 보여 주는 화면.
 class RouteScreen extends StatefulWidget {
-  const RouteScreen({super.key, required this.places});
+  const RouteScreen({
+    super.key,
+    required this.places,
+    this.title,
+    this.autoPlan = false,
+  });
 
   final List<PlaceView> places;
+
+  /// 화면 제목 (예: 연인 추천 코스). 없으면 "여행 루트".
+  final String? title;
+
+  /// 열자마자 루트를 만듦 (추천 코스에서 열 때).
+  final bool autoPlan;
 
   @override
   State<RouteScreen> createState() => _RouteScreenState();
@@ -22,11 +33,19 @@ class RouteScreen extends StatefulWidget {
 const _maxStops = 7;
 
 class _RouteScreenState extends State<RouteScreen> {
+  /// 고를 수 있는 장소 (근처 추천을 누르면 늘어남).
+  late final List<PlaceView> _places = [...widget.places];
   late final Set<int> _picked = {
     for (final p in widget.places.take(_maxStops)) p.dbId,
   };
   String _mode = 'walking';
-  late TimeOfDay _start = _roundedNow();
+  // 저녁 늦게나 이른 새벽에는 대부분 문을 닫으므로 내일 오전 10시로 시작.
+  static final bool _tomorrow =
+      DateTime.now().hour >= 19 || DateTime.now().hour < 7;
+  bool _nextDay = _tomorrow;
+  late TimeOfDay _start = _nextDay
+      ? const TimeOfDay(hour: 10, minute: 0)
+      : _roundedNow();
 
   bool _loading = false;
   bool _failed = false;
@@ -39,7 +58,40 @@ class _RouteScreenState extends State<RouteScreen> {
     return TimeOfDay(hour: m ~/ 60 % 24, minute: m % 60);
   }
 
-  PlaceView _place(int id) => widget.places.firstWhere((p) => p.dbId == id);
+  PlaceView _place(int id) => _places.firstWhere((p) => p.dbId == id);
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.autoPlan && _picked.length >= 2) _plan();
+  }
+
+  /// 고른 곳들의 가운데에서 가까운, 아직 안 고른 곳 (정보 많은 곳 우선).
+  List<PlaceView> get _suggestions {
+    final picked = _places.where((p) => _picked.contains(p.dbId)).toList();
+    if (picked.isEmpty) return [];
+    final lat =
+        picked.map((p) => p.lat).reduce((a, b) => a + b) / picked.length;
+    final lng =
+        picked.map((p) => p.lng).reduce((a, b) => a + b) / picked.length;
+    double d(PlaceView p) =>
+        (p.lat - lat) * (p.lat - lat) + (p.lng - lng) * (p.lng - lng);
+    final hasFood = picked.any((p) => p.category == PlaceCategory.food);
+    final candidates =
+        placesStore.value
+            .where((p) => !_places.any((q) => q.dbId == p.dbId))
+            .where((p) => p.imageUrl != null || p.oneLiner != null)
+            .toList()
+          ..sort((a, b) => d(a).compareTo(d(b)));
+    // 식당이 없으면 식당 하나는 꼭 보여 줌
+    final food = hasFood
+        ? null
+        : candidates.where((p) => p.category == PlaceCategory.food).firstOrNull;
+    return [
+      ?food,
+      ...candidates.where((p) => p != food).take(food == null ? 3 : 2),
+    ];
+  }
 
   Future<void> _plan() async {
     setState(() {
@@ -50,14 +102,14 @@ class _RouteScreenState extends State<RouteScreen> {
     try {
       final plans = await client.route.plan(
         [
-          for (final p in widget.places)
+          for (final p in _places)
             if (_picked.contains(p.dbId)) p.dbId,
         ],
         _mode,
         loc.lat,
         loc.lng,
         _start.hour * 60 + _start.minute,
-        DateTime.now().weekday,
+        DateTime.now().add(Duration(days: _nextDay ? 1 : 0)).weekday,
       );
       if (!mounted) return;
       setState(() {
@@ -85,7 +137,7 @@ class _RouteScreenState extends State<RouteScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(t('route_title'), style: AppText.section),
+        title: Text(widget.title ?? t('route_title'), style: AppText.section),
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
       ),
@@ -98,7 +150,7 @@ class _RouteScreenState extends State<RouteScreen> {
             spacing: 6,
             runSpacing: 6,
             children: [
-              for (final p in widget.places)
+              for (final p in _places)
                 FilterChip(
                   label: Text(p.displayName),
                   selected: _picked.contains(p.dbId),
@@ -113,6 +165,30 @@ class _RouteScreenState extends State<RouteScreen> {
                 ),
             ],
           ),
+          if (_suggestions.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text(
+              t('route_suggest'),
+              style: AppText.name.copyWith(fontSize: 14),
+            ),
+            Text(t('route_suggest_sub'), style: AppText.caption),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final p in _suggestions)
+                  ActionChip(
+                    avatar: Icon(categoryIcon(p.category), size: 16),
+                    label: Text('${p.displayName} · ${p.categoryLabel}'),
+                    onPressed: () => _changed(() {
+                      _places.add(p);
+                      if (_picked.length < _maxStops) _picked.add(p.dbId);
+                    }),
+                  ),
+              ],
+            ),
+          ],
           const SizedBox(height: 16),
           SegmentedButton<String>(
             segments: [
@@ -141,6 +217,13 @@ class _RouteScreenState extends State<RouteScreen> {
             children: [
               Text(t('route_start'), style: AppText.body),
               const SizedBox(width: 8),
+              ChoiceChip(
+                label: Text(t(_nextDay ? 'route_tomorrow' : 'route_today')),
+                selected: false,
+                showCheckmark: false,
+                onSelected: (_) => _changed(() => _nextDay = !_nextDay),
+              ),
+              const SizedBox(width: 6),
               ActionChip(
                 avatar: const Icon(Icons.schedule, size: 16),
                 label: Text(_fmt(_start.hour * 60 + _start.minute)),

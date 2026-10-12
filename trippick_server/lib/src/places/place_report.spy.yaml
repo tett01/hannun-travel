@@ -1,0 +1,13 @@
+### A traveler's report that a place differs from the info shown in the app,
+### e.g. it has closed or its hours changed.
+class: PlaceReport
+table: place_report
+fields:
+  placeId: int
+  ### closed_forever | hours | break_time | closed_day | other
+  kind: String
+  note: String?
+  createdAt: DateTime, default=now
+indexes:
+  place_report_place_idx:
+    fields: placeId

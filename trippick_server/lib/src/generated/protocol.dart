@@ -16,6 +16,8 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:trippick_server/src/generated/places/location_hit.dart'
     as _i41cypjd;
 import 'package:trippick_server/src/generated/places/place.dart' as _i8c2er40;
+import 'package:trippick_server/src/generated/places/place_report.dart'
+    as _iskcn2mu;
 import 'package:trippick_server/src/generated/places/route_plan.dart'
     as _i37s88i3;
 import 'package:trippick_server/src/generated/places/user_review.dart'
@@ -23,6 +25,7 @@ import 'package:trippick_server/src/generated/places/user_review.dart'
 import 'places/collected_area.dart' as _iefsfaz0;
 import 'places/location_hit.dart' as _icggq6kf;
 import 'places/place.dart' as _ion0otjm;
+import 'places/place_report.dart' as _i85w78xd;
 import 'places/review_summary.dart' as _ii1d0owx;
 import 'places/route_plan.dart' as _ijecgs00;
 import 'places/route_stop.dart' as _iciv6ehk;
@@ -30,6 +33,7 @@ import 'places/user_review.dart' as _ipwgf7iv;
 export 'places/collected_area.dart';
 export 'places/location_hit.dart';
 export 'places/place.dart';
+export 'places/place_report.dart';
 export 'places/review_summary.dart';
 export 'places/route_plan.dart';
 export 'places/route_stop.dart';
@@ -266,6 +270,63 @@ class Protocol extends _is.DatabaseSerializationManager {
       managed: true,
     ),
     _isp.TableDefinition(
+      name: 'place_report',
+      dartName: 'PlaceReport',
+      schema: 'public',
+      module: 'trippick',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'placeId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'kind',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'note',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+          columnDefault: 'now',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'place_report_place_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'placeId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
       name: 'user_review',
       dartName: 'UserReview',
       schema: 'public',
@@ -367,6 +428,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _ion0otjm.Place) {
       return _ion0otjm.Place.fromJson(data) as T;
     }
+    if (t == _i85w78xd.PlaceReport) {
+      return _i85w78xd.PlaceReport.fromJson(data) as T;
+    }
     if (t == _ii1d0owx.ReviewSummary) {
       return _ii1d0owx.ReviewSummary.fromJson(data) as T;
     }
@@ -388,6 +452,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (t == _is.getType<_ion0otjm.Place?>()) {
       return (data != null ? _ion0otjm.Place.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_i85w78xd.PlaceReport?>()) {
+      return (data != null ? _i85w78xd.PlaceReport.fromJson(data) : null) as T;
     }
     if (t == _is.getType<_ii1d0owx.ReviewSummary?>()) {
       return (data != null ? _ii1d0owx.ReviewSummary.fromJson(data) : null)
@@ -442,6 +509,12 @@ class Protocol extends _is.DatabaseSerializationManager {
               .toList()
           as T;
     }
+    if (t == List<_iskcn2mu.PlaceReport>) {
+      return (data as List)
+              .map((e) => deserialize<_iskcn2mu.PlaceReport>(e))
+              .toList()
+          as T;
+    }
     if (t == List<_ipn410b6.UserReview>) {
       return (data as List)
               .map((e) => deserialize<_ipn410b6.UserReview>(e))
@@ -468,6 +541,7 @@ class Protocol extends _is.DatabaseSerializationManager {
       _iefsfaz0.CollectedArea => 'CollectedArea',
       _icggq6kf.LocationHit => 'LocationHit',
       _ion0otjm.Place => 'Place',
+      _i85w78xd.PlaceReport => 'PlaceReport',
       _ii1d0owx.ReviewSummary => 'ReviewSummary',
       _ijecgs00.RoutePlan => 'RoutePlan',
       _iciv6ehk.RouteStop => 'RouteStop',
@@ -492,6 +566,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'LocationHit';
       case _ion0otjm.Place():
         return 'Place';
+      case _i85w78xd.PlaceReport():
+        return 'PlaceReport';
       case _ii1d0owx.ReviewSummary():
         return 'ReviewSummary';
       case _ijecgs00.RoutePlan():
@@ -522,6 +598,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (dataClassName == 'Place') {
       return deserialize<_ion0otjm.Place>(data['data']);
+    }
+    if (dataClassName == 'PlaceReport') {
+      return deserialize<_i85w78xd.PlaceReport>(data['data']);
     }
     if (dataClassName == 'ReviewSummary') {
       return deserialize<_ii1d0owx.ReviewSummary>(data['data']);
@@ -555,6 +634,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         return _iefsfaz0.CollectedArea.t;
       case _ion0otjm.Place:
         return _ion0otjm.Place.t;
+      case _i85w78xd.PlaceReport:
+        return _i85w78xd.PlaceReport.t;
       case _ipwgf7iv.UserReview:
         return _ipwgf7iv.UserReview.t;
     }

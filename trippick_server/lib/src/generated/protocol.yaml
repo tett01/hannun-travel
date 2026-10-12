@@ -1,7 +1,11 @@
 place:
   - nearby:
+  - stations:
   - regionName:
   - searchLocation:
+report:
+  - add:
+  - list:
 review:
   - list:
   - add:

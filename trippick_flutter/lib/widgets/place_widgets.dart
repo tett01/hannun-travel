@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/traits.dart';
 import '../l10n.dart';
 import '../models/place_view.dart';
 import '../screens/place_detail_screen.dart';
@@ -270,6 +271,8 @@ class PlaceRow extends StatelessWidget {
                         ],
                       ),
                       PlaceMeta(place: place),
+                      const SizedBox(height: 6),
+                      TraitTags(place: place),
                     ],
                   ),
                 ),
@@ -345,6 +348,78 @@ class FeaturedCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// 실내/실외 · 주차 · 가까운 역 · 금액대 · 아이 메뉴 태그 (아는 것만).
+class TraitTags extends StatelessWidget {
+  const TraitTags({super.key, required this.place});
+
+  final PlaceView place;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder(
+      valueListenable: stationsStore,
+      builder: (context, _, _) {
+        final p = place;
+        final indoor = isIndoor(p);
+        final parking = hasParking(p);
+        final station = nearestStation(p);
+        final price = priceOf(p);
+        final kid = kidMenu(p);
+        final tags = <(IconData, String, Color)>[
+          if (indoor != null)
+            (
+              indoor ? Icons.roofing_outlined : Icons.wb_sunny_outlined,
+              t(indoor ? 'trait_indoor' : 'trait_outdoor'),
+              AppColors.sub,
+            ),
+          if (price != null)
+            (
+              Icons.payments_outlined,
+              price.estimated && price.tier != PriceTier.free
+                  ? '${priceLabel(price.tier)} (${t('price_est')})'
+                  : priceLabel(price.tier),
+              AppColors.sub,
+            ),
+          if (parking != null)
+            (
+              Icons.local_parking_outlined,
+              t(parking ? 'trait_parking' : 'trait_no_parking'),
+              parking ? AppColors.good : AppColors.bad,
+            ),
+          if (station != null && station.meters <= 1500)
+            (
+              Icons.directions_subway_outlined,
+              '${station.name} ${t('trait_station_walk', n: walkMinutes(station.meters))}',
+              AppColors.sub,
+            ),
+          if (kid != null)
+            (
+              Icons.child_care_outlined,
+              t('trait_kid_menu', n: kid),
+              AppColors.tip,
+            ),
+        ];
+        if (tags.isEmpty) return const SizedBox.shrink();
+        return Wrap(
+          spacing: 10,
+          runSpacing: 4,
+          children: [
+            for (final (icon, label, color) in tags)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, size: 14, color: color),
+                  const SizedBox(width: 3),
+                  Text(label, style: AppText.caption.copyWith(color: color)),
+                ],
+              ),
+          ],
+        );
+      },
     );
   }
 }

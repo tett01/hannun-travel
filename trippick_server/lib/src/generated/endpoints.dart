@@ -12,6 +12,7 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _is;
 import '../places/place_endpoint.dart' as _iyw3o9dp;
+import '../places/report_endpoint.dart' as _iddiujvh;
 import '../places/review_endpoint.dart' as _iptyoesq;
 import '../places/route_endpoint.dart' as _idzkey6u;
 
@@ -23,6 +24,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'place',
+          null,
+        ),
+      'report': _iddiujvh.ReportEndpoint()
+        ..initialize(
+          server,
+          'report',
           null,
         ),
       'review': _iptyoesq.ReviewEndpoint()
@@ -65,6 +72,31 @@ class Endpoints extends _is.EndpointDispatch {
                 params['lat'],
                 params['lng'],
               ),
+        ),
+        'stations': _is.MethodConnector(
+          name: 'stations',
+          params: {
+            'lat': _is.ParameterDescription(
+              name: 'lat',
+              type: _is.getType<double>(),
+              nullable: false,
+            ),
+            'lng': _is.ParameterDescription(
+              name: 'lng',
+              type: _is.getType<double>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['place'] as _iyw3o9dp.PlaceEndpoint).stations(
+                    session,
+                    params['lat'],
+                    params['lng'],
+                  ),
         ),
         'regionName': _is.MethodConnector(
           name: 'regionName',
@@ -121,6 +153,60 @@ class Endpoints extends _is.EndpointDispatch {
                     params['query'],
                     params['language'],
                   ),
+        ),
+      },
+    );
+    connectors['report'] = _is.EndpointConnector(
+      name: 'report',
+      endpoint: endpoints['report']!,
+      methodConnectors: {
+        'add': _is.MethodConnector(
+          name: 'add',
+          params: {
+            'placeId': _is.ParameterDescription(
+              name: 'placeId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'kind': _is.ParameterDescription(
+              name: 'kind',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'note': _is.ParameterDescription(
+              name: 'note',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['report'] as _iddiujvh.ReportEndpoint).add(
+                session,
+                params['placeId'],
+                params['kind'],
+                params['note'],
+              ),
+        ),
+        'list': _is.MethodConnector(
+          name: 'list',
+          params: {
+            'placeId': _is.ParameterDescription(
+              name: 'placeId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['report'] as _iddiujvh.ReportEndpoint).list(
+                session,
+                params['placeId'],
+              ),
         ),
       },
     );

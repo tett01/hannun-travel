@@ -20,6 +20,7 @@ class PlaceDetailScreen extends StatefulWidget {
 
 class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
   List<UserReview>? _reviews;
+  List<PlaceReport> _reports = const [];
 
   PlaceView get _place =>
       placesStore.value.firstWhere((p) => p.dbId == widget.placeId);
@@ -28,6 +29,85 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
   void initState() {
     super.initState();
     _loadReviews();
+    _loadReports();
+  }
+
+  Future<void> _loadReports() async {
+    try {
+      final reports = await loadReports(_place);
+      if (mounted) setState(() => _reports = reports);
+    } catch (e) {
+      debugPrint('loadReports failed: $e');
+    }
+  }
+
+  Future<void> _report() async {
+    final reports = await showModalBottomSheet<List<PlaceReport>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => _ReportSheet(place: _place),
+    );
+    if (reports != null && mounted) {
+      setState(() => _reports = reports);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(t('report_done'))));
+    }
+  }
+
+  /// 최근 제보: 종류별 건수와 최근 메모.
+  Widget _reportBanner() {
+    final counts = <String, int>{};
+    for (final r in _reports) {
+      counts[r.kind] = (counts[r.kind] ?? 0) + 1;
+    }
+    final notes = _reports
+        .where((r) => (r.note ?? '').isNotEmpty)
+        .take(2)
+        .map(
+          (r) =>
+              '"${r.note}" (${r.createdAt.toLocal().month}/${r.createdAt.toLocal().day})',
+        );
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.bad.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.bad.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            t('report_recent', n: _reports.length),
+            style: AppText.body.copyWith(
+              fontSize: 13,
+              color: AppColors.bad,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            [
+              for (final e in counts.entries)
+                '${t('report_${e.key}')} ${e.value}',
+            ].join(' · '),
+            style: AppText.body.copyWith(fontSize: 13, color: AppColors.ink),
+          ),
+          for (final n in notes)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(n, style: AppText.small),
+            ),
+        ],
+      ),
+    );
   }
 
   Future<void> _loadReviews() async {
@@ -120,6 +200,8 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
             Text(p.name, style: AppText.small),
           const SizedBox(height: 4),
           PlaceMeta(place: p),
+          const SizedBox(height: 6),
+          TraitTags(place: p),
           const SizedBox(height: 12),
           _iconLine(Icons.place_outlined, p.address),
           if (p.tel != null) _iconLine(Icons.call_outlined, p.tel!),
@@ -153,8 +235,9 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
           if (p.highlight != null) SummaryBlock(place: p, kind: 'highlight'),
           if (p.reviewSummary == null && p.highlight == null)
             SummaryBlock(place: p),
-          if (p.facts.isNotEmpty || p.isArea) ...[
+          if (p.facts.isNotEmpty || p.isArea || _reports.isNotEmpty) ...[
             _sectionTitle(t('info')),
+            if (_reports.isNotEmpty) _reportBanner(),
             if (lang.value == Lang.en && p.isOfficial && p.factsEn.isEmpty)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
@@ -173,6 +256,18 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                 child: Text(t('check_before'), style: AppText.caption),
               ),
           ],
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: _report,
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.sub,
+                padding: EdgeInsets.zero,
+              ),
+              icon: const Icon(Icons.flag_outlined, size: 18),
+              label: Text(t('report_button')),
+            ),
+          ),
           // TourAPI text is Korean (hidden in English mode); Wikipedia
           // text is usually English, so it is shown in both modes.
           if (p.overview != null &&
@@ -511,6 +606,115 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                     ),
                   )
                 : Text(t('review_submit')),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 정보 오류 제보: 폐업 / 운영시간 / 브레이크타임 / 쉬는 날 / 기타 + 메모.
+class _ReportSheet extends StatefulWidget {
+  const _ReportSheet({required this.place});
+
+  final PlaceView place;
+
+  @override
+  State<_ReportSheet> createState() => _ReportSheetState();
+}
+
+class _ReportSheetState extends State<_ReportSheet> {
+  static const _kinds = [
+    'closed_forever',
+    'hours',
+    'break_time',
+    'closed_day',
+    'other',
+  ];
+  String? _kind;
+  final _note = TextEditingController();
+  bool _sending = false;
+
+  @override
+  void dispose() {
+    _note.dispose();
+    super.dispose();
+  }
+
+  Future<void> _send() async {
+    setState(() => _sending = true);
+    try {
+      final reports = await addReport(
+        widget.place,
+        kind: _kind!,
+        note: _note.text,
+      );
+      if (mounted) Navigator.of(context).pop(reports);
+    } catch (e) {
+      debugPrint('addReport failed: $e');
+      if (!mounted) return;
+      setState(() => _sending = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(t('report_failed'))));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        20,
+        20,
+        20 + MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(t('report_title'), style: AppText.section),
+          const SizedBox(height: 4),
+          Text(t('report_sub'), style: AppText.small),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final k in _kinds)
+                ChoiceChip(
+                  label: Text(t('report_$k')),
+                  selected: _kind == k,
+                  showCheckmark: false,
+                  onSelected: (_) => setState(() => _kind = k),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _note,
+            maxLength: 300,
+            maxLines: 3,
+            minLines: 2,
+            decoration: InputDecoration(
+              hintText: t('report_note'),
+              hintStyle: AppText.small,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          FilledButton(
+            onPressed: _kind == null || _sending ? null : _send,
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.ink,
+              minimumSize: const Size.fromHeight(50),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: Text(t('report_send')),
           ),
         ],
       ),

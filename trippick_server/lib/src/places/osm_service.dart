@@ -57,6 +57,30 @@ class OsmService {
     throw Exception('Overpass failed: $lastError');
   }
 
+  /// Rail, subway and tram stations within the search radius.
+  Future<List<LocationHit>> stations(double lat, double lng) async {
+    final r = DemoCity.radius;
+    final elements = await _query(
+      '[out:json][timeout:20];'
+      '(node["railway"="station"](around:$r,$lat,$lng);'
+      'node["public_transport"="station"](around:$r,$lat,$lng);'
+      'node["railway"="tram_stop"](around:$r,$lat,$lng););out;',
+    );
+    final seen = <String>{};
+    return [
+      for (final e in elements)
+        if (e['tags'] is Map &&
+            (e['tags'] as Map)['name'] != null &&
+            seen.add('${(e['tags'] as Map)['name']}'))
+          LocationHit(
+            name: '${(e['tags'] as Map)['name']}',
+            address: '',
+            lat: (e['lat'] as num).toDouble(),
+            lng: (e['lon'] as num).toDouble(),
+          ),
+    ];
+  }
+
   static String _address(Map<String, dynamic> t) {
     final street = [
       t['addr:street'],

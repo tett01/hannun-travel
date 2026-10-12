@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../data/traits.dart';
 import '../l10n.dart';
 import '../models/place_view.dart';
 import '../theme.dart';
 import '../widgets/filters.dart';
 import '../widgets/location_picker.dart';
 import '../widgets/place_widgets.dart';
+import 'route_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.places});
@@ -22,16 +24,132 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _taste;
   String _query = '';
 
+  /// 누구와 · 실내/실외 · 주차/역 근처 · 금액대 조건.
+  Set<String> _conds = {};
+
+  String? get _who => _conds.where((c) => companions.contains(c)).firstOrNull;
+
+  // 역 정보는 장소보다 늦게 도착하므로 오면 다시 그림
+  void _refresh() => setState(() {});
+
+  @override
+  void initState() {
+    super.initState();
+    stationsStore.addListener(_refresh);
+  }
+
+  @override
+  void dispose() {
+    stationsStore.removeListener(_refresh);
+    super.dispose();
+  }
+
+  bool _meets(PlaceView p) {
+    for (final c in _conds) {
+      final ok = switch (c) {
+        'couple' || 'parents' || 'kids' => companionScore(p, c) > 0,
+        'indoor' => isIndoor(p) == true,
+        'outdoor' => isIndoor(p) == false,
+        'parking' => hasParking(p) == true,
+        'station' => nearStation(p),
+        _ => priceOf(p)?.tier.name == c,
+      };
+      if (!ok) return false;
+    }
+    return true;
+  }
+
   List<PlaceView> get _filtered {
     final q = _query.trim().toLowerCase();
     final list = widget.places.where((p) {
       if (_category != null && p.category != _category) return false;
       if (_subcategory != null && p.subcategory != _subcategory) return false;
+      if (!_meets(p)) return false;
       if (q.isEmpty) return true;
       return p.name.toLowerCase().contains(q) ||
           p.nameEn.toLowerCase().contains(q);
     }).toList();
-    return recommend(list, _taste);
+    final ranked = recommend(list, _taste);
+    final who = _who;
+    if (who == null) return ranked;
+    // 동행에 더 잘 맞는 곳 먼저 (같으면 기존 순서)
+    final order = {for (var i = 0; i < ranked.length; i++) ranked[i].dbId: i};
+    return ranked..sort((a, b) {
+      final d = companionScore(b, who) - companionScore(a, who);
+      return d != 0 ? d : order[a.dbId]! - order[b.dbId]!;
+    });
+  }
+
+  void _openCourse(String who) {
+    final course = companionCourse(widget.places, who);
+    if (course.length < 2) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(t('course_none'))));
+      return;
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => RouteScreen(
+          places: course,
+          title: t('course_$who'),
+          autoPlan: true,
+        ),
+      ),
+    );
+  }
+
+  Widget _courseCard() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(t('course_title'), style: AppText.section),
+          const SizedBox(height: 2),
+          Text(t('course_sub'), style: AppText.small),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              for (final (who, icon) in [
+                ('couple', Icons.favorite_border),
+                ('parents', Icons.elderly_outlined),
+                ('kids', Icons.child_care_outlined),
+              ]) ...[
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => _openCourse(who),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.ink,
+                      side: const BorderSide(color: AppColors.line),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(icon, size: 22, color: AppColors.accent),
+                        const SizedBox(height: 4),
+                        Text(
+                          t('cond_$who'),
+                          style: AppText.body.copyWith(
+                            fontSize: 13,
+                            color: AppColors.ink,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (who != 'kids') const SizedBox(width: 8),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -84,6 +202,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       selected: _subcategory,
                       onChanged: (v) => setState(() => _subcategory = v),
                     ),
+                  ConditionChips(
+                    selected: _conds,
+                    onChanged: (v) => setState(() => _conds = v),
+                  ),
                   const Divider(height: 1),
                 ],
               ),
@@ -125,6 +247,15 @@ class _HomeScreenState extends State<HomeScreen> {
             const SliverToBoxAdapter(
               child: Divider(height: 8, thickness: 8, color: AppColors.soft),
             ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 20),
+                child: _courseCard(),
+              ),
+            ),
+            const SliverToBoxAdapter(
+              child: Divider(height: 8, thickness: 8, color: AppColors.soft),
+            ),
           ],
           SliverToBoxAdapter(
             child: Padding(
@@ -141,6 +272,13 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
+          if (_conds.isNotEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
+                child: Text(t('rule_note'), style: AppText.caption),
+              ),
+            ),
           if (list.isEmpty)
             SliverToBoxAdapter(
               child: Padding(
@@ -237,7 +375,7 @@ class _PinnedFilters extends SliverPersistentHeaderDelegate {
   _PinnedFilters({required this.child});
 
   final Widget child;
-  static const _height = 101.0;
+  static const _height = 145.0;
 
   @override
   double get minExtent => _height;

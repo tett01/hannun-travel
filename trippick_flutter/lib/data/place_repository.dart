@@ -3,13 +3,31 @@ import 'package:trippick_client/trippick_client.dart';
 import '../client.dart';
 import '../models/place_view.dart';
 import 'location.dart';
+import 'traits.dart';
 
 /// Loads places around the current [locationStore] into [placesStore].
 Future<void> loadPlaces() async {
   final loc = locationStore.value;
   final places = await client.place.nearby(loc.lat, loc.lng);
   placesStore.value = [for (final p in places) toView(p)];
+  // 역 근처 표시용. 실패해도 장소 목록에는 영향 없음.
+  client.place
+      .stations(loc.lat, loc.lng)
+      .then((s) => stationsStore.value = s)
+      .catchError((Object e) {
+        stationsStore.value = [];
+        return <LocationHit>[];
+      });
 }
+
+Future<List<PlaceReport>> loadReports(PlaceView place) =>
+    client.report.list(place.dbId);
+
+Future<List<PlaceReport>> addReport(
+  PlaceView place, {
+  required String kind,
+  required String note,
+}) => client.report.add(place.dbId, kind, note);
 
 Future<List<UserReview>> loadReviews(PlaceView place) =>
     client.review.list(place.dbId);

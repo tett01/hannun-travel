@@ -71,6 +71,33 @@ class KakaoService {
     ];
   }
 
+  /// Subway stations within the search radius (Kakao category SW8).
+  Future<List<LocationHit>> stations(double lat, double lng) async {
+    final hits = <LocationHit>[];
+    for (var page = 1; page <= 3; page++) {
+      final docs = await _get('category', {
+        'category_group_code': 'SW8',
+        'x': '$lng',
+        'y': '$lat',
+        'radius': '${DemoCity.radius}',
+        'sort': 'distance',
+        'page': '$page',
+      });
+      for (final d in docs) {
+        hits.add(
+          LocationHit(
+            name: d['place_name'] as String,
+            address: (d['category_name'] as String?) ?? '',
+            lat: double.parse(d['y'] as String),
+            lng: double.parse(d['x'] as String),
+          ),
+        );
+      }
+      if (docs.length < 15) break;
+    }
+    return hits;
+  }
+
   Future<List<Map<String, dynamic>>> _get(
     String path,
     Map<String, String> params,

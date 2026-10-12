@@ -192,3 +192,96 @@ class _ChipRow extends StatelessWidget {
     );
   }
 }
+
+/// 조건 칩 (여러 개 고를 수 있음, 같은 묶음 안에서는 하나만):
+/// 누구와 · 날씨(실내/실외) · 이동(주차/역 근처) · 금액대
+class ConditionChips extends StatelessWidget {
+  const ConditionChips({
+    super.key,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final Set<String> selected;
+  final ValueChanged<Set<String>> onChanged;
+
+  static const groups = [
+    ['couple', 'parents', 'kids'],
+    ['indoor', 'outdoor'],
+    ['parking', 'station'],
+    ['free', 'low', 'mid', 'high'],
+  ];
+
+  void _toggle(String key) {
+    final group = groups.firstWhere((g) => g.contains(key));
+    final next = {...selected}..removeAll(group);
+    if (!selected.contains(key)) next.add(key);
+    onChanged(next);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 44,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 2, 20, 10),
+        scrollDirection: Axis.horizontal,
+        children: [
+          for (var g = 0; g < groups.length; g++) ...[
+            if (g > 0)
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                child: VerticalDivider(width: 1, color: AppColors.line),
+              ),
+            for (final key in groups[g])
+              Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: _SmallChip(
+                  label: t('cond_$key'),
+                  on: selected.contains(key),
+                  onTap: () => _toggle(key),
+                ),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _SmallChip extends StatelessWidget {
+  const _SmallChip({
+    required this.label,
+    required this.on,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool on;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: on ? AppColors.accent.withValues(alpha: 0.1) : AppColors.soft,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: on ? AppColors.accent : AppColors.soft),
+        ),
+        child: Text(
+          label,
+          style: AppText.caption.copyWith(
+            fontSize: 12.5,
+            color: on ? AppColors.accent : AppColors.sub,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+}

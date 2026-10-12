@@ -53,6 +53,30 @@ class PlaceEndpoint extends Endpoint {
     return places;
   }
 
+  /// Stations near ([lat], [lng]) for "near a station" filters, cached per
+  /// area since stations rarely move. Empty when unknown.
+  Future<List<LocationHit>> stations(
+    Session session,
+    double lat,
+    double lng,
+  ) async {
+    final key = '${lat.toStringAsFixed(2)},${lng.toStringAsFixed(2)}';
+    final cached = _stations[key];
+    if (cached != null) return cached;
+    try {
+      final hits = isInKorea(lat, lng)
+          ? await kakaoServiceFor(session)?.stations(lat, lng) ?? []
+          : await OsmService().stations(lat, lng);
+      if (_stations.length > 200) _stations.clear();
+      return _stations[key] = hits;
+    } catch (e) {
+      session.log('stations failed: $e', level: LogLevel.warning);
+      return [];
+    }
+  }
+
+  static final _stations = <String, List<LocationHit>>{};
+
   /// Neighborhood name such as "해운대구 우동" ('' if unknown).
   Future<String> regionName(
     Session session,

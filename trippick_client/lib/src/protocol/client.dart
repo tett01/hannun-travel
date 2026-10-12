@@ -16,6 +16,8 @@ import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'package:trippick_client/src/protocol/places/location_hit.dart'
     as _iojwpf7q;
 import 'package:trippick_client/src/protocol/places/place.dart' as _itawvtbq;
+import 'package:trippick_client/src/protocol/places/place_report.dart'
+    as _ia8ye04g;
 import 'package:trippick_client/src/protocol/places/route_plan.dart'
     as _i0nbmmlc;
 import 'package:trippick_client/src/protocol/places/user_review.dart'
@@ -39,6 +41,20 @@ class EndpointPlace extends _isc.EndpointRef {
   ) => caller.callServerEndpoint<List<_itawvtbq.Place>>(
     'place',
     'nearby',
+    {
+      'lat': lat,
+      'lng': lng,
+    },
+  );
+
+  /// Stations near ([lat], [lng]) for "near a station" filters, cached per
+  /// area since stations rarely move. Empty when unknown.
+  _ida.Future<List<_iojwpf7q.LocationHit>> stations(
+    double lat,
+    double lng,
+  ) => caller.callServerEndpoint<List<_iojwpf7q.LocationHit>>(
+    'place',
+    'stations',
     {
       'lat': lat,
       'lng': lng,
@@ -76,6 +92,39 @@ class EndpointPlace extends _isc.EndpointRef {
       'language': language,
     },
   );
+}
+
+/// Accessed from the app as `client.report`.
+/// {@category Endpoint}
+class EndpointReport extends _isc.EndpointRef {
+  EndpointReport(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'report';
+
+  /// Saves a report that [placeId] differs from the shown info and returns
+  /// the place's recent reports.
+  _ida.Future<List<_ia8ye04g.PlaceReport>> add(
+    int placeId,
+    String kind,
+    String note,
+  ) => caller.callServerEndpoint<List<_ia8ye04g.PlaceReport>>(
+    'report',
+    'add',
+    {
+      'placeId': placeId,
+      'kind': kind,
+      'note': note,
+    },
+  );
+
+  /// Reports for [placeId] from the last [recent] days, newest first.
+  _ida.Future<List<_ia8ye04g.PlaceReport>> list(int placeId) =>
+      caller.callServerEndpoint<List<_ia8ye04g.PlaceReport>>(
+        'report',
+        'list',
+        {'placeId': placeId},
+      );
 }
 
 /// Accessed from the app as `client.review`.
@@ -173,11 +222,14 @@ class Client extends _isc.ServerpodClientShared {
          httpClientOverride: httpClientOverride,
        ) {
     place = EndpointPlace(this);
+    report = EndpointReport(this);
     review = EndpointReview(this);
     route = EndpointRoute(this);
   }
 
   late final EndpointPlace place;
+
+  late final EndpointReport report;
 
   late final EndpointReview review;
 
@@ -186,6 +238,7 @@ class Client extends _isc.ServerpodClientShared {
   @override
   Map<String, _isc.EndpointRef> get endpointRefLookup => {
     'place': place,
+    'report': report,
     'review': review,
     'route': route,
   };
