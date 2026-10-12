@@ -18,6 +18,7 @@ Built for the Serverpod *Build Something Real* hackathon.
 - **Taste-based ranking**: pick Relaxing, Active, Foodie or Photo spots, and places tagged for that taste come first.
 - **AI that cannot invent places**: places only come from TourAPI, Kakao or OpenStreetMap. The AI only summarizes the text it is given, is told to write "No info" rather than guess, and its tags are checked against a fixed list.
 - **Reviews**: star rating and text; the server recalculates the average and regenerates the review summary.
+- **Route planner**: pick saved places, a travel mode (car, walking, transit) and a start time, and get up to three visiting orders: one that fits opening hours (waits out break times, warns about closing days), one that puts restaurants at meal times, and one with the least travel. Each shows arrival times, parking in car mode and an estimated cost per person, and opens in Kakao Map or Google Maps for directions.
 - **Map view** with place cards, **saved places**, and a **Korean / English** switch.
 
 ## How Serverpod is used
@@ -28,7 +29,8 @@ Built for the Serverpod *Build Something Real* hackathon.
 | `PlaceEndpoint.searchLocation(query, language)` | Finds a hotel, address or place to explore around (Kakao in Korea, OpenStreetMap Nominatim elsewhere) |
 | `PlaceEndpoint.regionName(lat, lng, language)` | Neighborhood name for the header (Kakao in Korea, OpenStreetMap Nominatim elsewhere) |
 | `ReviewEndpoint.add / list` | Stores reviews, updates ratings and regenerates the AI review summary |
-| Models (`.spy.yaml`) | `Place`, `ReviewSummary`, `UserReview`, `CollectedArea` with Postgres tables and migrations, plus `LocationHit` for search results |
+| `RouteEndpoint.plan(placeIds, mode, ...)` | Gets travel times between all stops from the Mapbox Matrix API (or estimates them), parses opening hours, break times, closing days and fees, and compares every visiting order |
+| Models (`.spy.yaml`) | `Place`, `ReviewSummary`, `UserReview`, `CollectedArea` with Postgres tables and migrations, plus `LocationHit` for search results and `RoutePlan` / `RouteStop` for routes |
 | Background sync | On start and after each new area, a background session fills official details, Wikipedia text, place kinds and AI summaries, skipping finished work (areas collected earlier also get newly added kinds, such as indoor fun) |
 | Passwords | API keys live in `config/passwords.yaml` locally and in Serverpod Cloud passwords, never in code |
 
@@ -43,6 +45,7 @@ Flutter app (web / iOS / Android)
 Serverpod server ── Postgres (places, reviews, collected areas)
    ├─ Korea:    TourAPI (KTO) + Kakao Local
    ├─ Overseas: OpenStreetMap Overpass + Wikipedia / Wikidata
+   ├─ Routes:   Mapbox Matrix API (travel times)
    └─ AI:       Groq (OpenAI-compatible) for KO/EN summaries
 ```
 
@@ -56,6 +59,7 @@ Requirements: Flutter 3.44+ and the Serverpod CLI (`dart install serverpod_cli`)
      kakaoRestKey: ''      # Kakao Developers REST API key
      tourApiKey: ''        # data.go.kr TourAPI (KorService2), "Decoding" key
      groqApiKey: ''        # console.groq.com
+     mapboxToken: ''       # account.mapbox.com (no card needed); routes fall back to estimates without it
    ```
    Every key is optional: the server skips whatever it cannot do. Places outside Korea need no keys; AI summaries need the Groq key.
 2. From the project root:
@@ -76,6 +80,7 @@ cd trippick_server && dart test
 - Places in Korea (including indoor fun): Kakao Local API
 - Places outside Korea and map tiles: © OpenStreetMap contributors (ODbL)
 - Descriptions and photos outside Korea: Wikipedia / Wikimedia Commons (CC BY-SA)
+- Route travel times: Mapbox Matrix API
 - AI summaries: generated with models served by Groq
 
 ## Project layout
