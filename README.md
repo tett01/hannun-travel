@@ -20,6 +20,8 @@ Built for the Serverpod *Build Something Real* hackathon.
 - **Reviews**: star rating and text; the server recalculates the average and regenerates the review summary.
 - **Conditions**: who you're with (couples, parents, kids), rainy day (indoor) or outdoor, parking or near a station, and price range. "Who are you going with?" builds a course and opens it in the route planner. Tags show indoor/outdoor, price (restaurant prices estimated from menus), parking, the nearest station and kid-friendly menu items, all read by rules from official info.
 - **Report wrong info**: travelers can report a closed place or different hours, break time or closing day; recent reports show on the place page.
+- **Multi-day trips**: assign places to day 1, day 2, …, get routes per day and save them as a named trip; trips pile up on the My trips tab (stored per device, no sign-in).
+- **Local specialties & souvenirs**: markets, craft and specialty shops nearby with what they sell (TourAPI shopping info + Kakao in Korea, OpenStreetMap elsewhere).
 - **Route planner**: pick saved places, a travel mode (car, walking, transit) and a start time, and get up to three visiting orders: one that fits opening hours (waits out break times, warns about closing days), one that puts restaurants at meal times, and one with the least travel. Each shows arrival times, parking in car mode and an estimated cost per person, and opens in Kakao Map or Google Maps for directions.
 - **Map view** with place cards, **saved places**, and a **Korean / English** switch.
 
@@ -33,8 +35,10 @@ Built for the Serverpod *Build Something Real* hackathon.
 | `ReviewEndpoint.add / list` | Stores reviews, updates ratings and regenerates the AI review summary |
 | `ReportEndpoint.add / list` | Stores traveler reports (closed, different hours, break time, closing day) and returns the last 90 days |
 | `PlaceEndpoint.stations(lat, lng)` | Subway and rail stations nearby (Kakao in Korea, OpenStreetMap elsewhere), cached per area |
+| `TripEndpoint.save / list / delete` | Named multi-day trips per device in the `trip` table |
+| `PlaceEndpoint.souvenirs(lat, lng)` | Markets, craft and specialty shops with what they sell |
 | `RouteEndpoint.plan(placeIds, mode, ...)` | Gets travel times between all stops from the Mapbox Matrix API (or estimates them), parses opening hours, break times, closing days and fees, and compares every visiting order |
-| Models (`.spy.yaml`) | `Place`, `ReviewSummary`, `UserReview`, `CollectedArea`, `PlaceReport` with Postgres tables and migrations, plus `LocationHit` for search results and `RoutePlan` / `RouteStop` for routes |
+| Models (`.spy.yaml`) | `Place`, `ReviewSummary`, `UserReview`, `CollectedArea`, `PlaceReport`, `Trip` with Postgres tables and migrations, plus `LocationHit` for search results and `RoutePlan` / `RouteStop` for routes |
 | Background sync | On start and after each new area, a background session fills official details, Wikipedia text, place kinds and AI summaries, skipping finished work (areas collected earlier also get newly added kinds, such as indoor fun) |
 | Passwords | API keys live in `config/passwords.yaml` locally and in Serverpod Cloud passwords, never in code |
 
